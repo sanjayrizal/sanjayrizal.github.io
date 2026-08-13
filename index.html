@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sanjay Rizal — Electrical & Electronics Engineer</title>
 <meta name="description" content="Sanjay Rizal — Electrical & Electronics Engineer, Power & Control Systems. Kathmandu University, 2025.">
+<!-- security hardening: static site, no backend — locking down what's controllable client-side -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -21,6 +25,7 @@
   --copper-dim:rgba(255,138,61,0.14);
   --signal:#5C7A5C;
   --scope-green:#39FF6A;
+  --neon-cyan:#3DDFFF;
   --font-display:'Space Grotesk',sans-serif;
   --font-body:'Inter',sans-serif;
   --font-mono:'JetBrains Mono',monospace;
@@ -258,7 +263,8 @@ nav{
   letter-spacing:.1em;writing-mode:vertical-rl;
   display:flex;align-items:center;gap:.6rem;
 }
-.hero-scroll::after{content:'';width:1px;height:38px;background:var(--ink-faint);}
+.hero-scroll::after{content:'';width:1px;height:38px;background:var(--ink-faint);animation:scroll-cue 1.8s ease-in-out infinite;}
+@keyframes scroll-cue{0%,100%{transform:scaleY(1);transform-origin:top;}50%{transform:scaleY(.55);transform-origin:top;}}
 @media(max-width:780px){.hero-scroll{display:none;}}
 
 /* ───────── SECTION SCAFFOLDING ───────── */
@@ -398,28 +404,49 @@ section{position:relative;z-index:2;padding:6.5rem 0;}
   box-shadow:0 6px 14px -6px rgba(255,138,61,0.35);
 }
 
-/* ───────── SIGNAL DIVIDER (signature element) ───────── */
-.signal-divider{position:relative;height:90px;overflow:hidden;}
-.signal-divider svg{width:100%;height:100%;display:block;overflow:visible;}
-.signal-path{
-  fill:none;stroke:var(--scope-green);stroke-width:1.6;
-  filter:drop-shadow(0 0 3px var(--scope-green));
-  opacity:0;
+/* ───────── CIRCUIT DIVIDER (signature element) ───────── */
+.circuit-divider{position:relative;height:150px;overflow:hidden;}
+.circuit-divider svg{width:100%;height:100%;display:block;overflow:visible;}
+
+.circuit-trace{fill:none;stroke:var(--line-strong);stroke-width:1.4;opacity:.4;}
+.circuit-trace.lit.c-green{stroke:var(--scope-green);filter:drop-shadow(0 0 2px var(--scope-green)) drop-shadow(0 0 7px var(--scope-green));}
+.circuit-trace.lit.c-copper{stroke:var(--copper);filter:drop-shadow(0 0 2px var(--copper)) drop-shadow(0 0 7px var(--copper));}
+.circuit-trace.lit.c-cyan{stroke:var(--neon-cyan);filter:drop-shadow(0 0 2px var(--neon-cyan)) drop-shadow(0 0 7px var(--neon-cyan));}
+
+.circuit-pad{fill:var(--bg);stroke:var(--ink-faint);stroke-width:1.2;opacity:.5;}
+.circuit-pad.lit.c-green{fill:var(--scope-green);stroke:var(--scope-green);filter:drop-shadow(0 0 5px var(--scope-green));}
+.circuit-pad.lit.c-copper{fill:var(--copper);stroke:var(--copper);filter:drop-shadow(0 0 5px var(--copper));}
+.circuit-pad.lit.c-cyan{fill:var(--neon-cyan);stroke:var(--neon-cyan);filter:drop-shadow(0 0 5px var(--neon-cyan));}
+.circuit-pad.lit{animation:neon-flicker 5s ease-in-out infinite;}
+
+@keyframes neon-flicker{
+  0%,19%,21%,23%,52%,54%,100%{opacity:1;}
+  20%,22%,53%{opacity:.45;}
 }
-.signal-pulse{
-  fill:var(--scope-green);
-  filter:drop-shadow(0 0 6px var(--scope-green));
-  opacity:0;
-}
-.signal-pulse.run{
+
+.chip-glow{fill:var(--copper-dim);opacity:0;filter:blur(9px);}
+.chip-glow.lit{opacity:1;animation:chip-breathe 3.4s ease-in-out infinite;}
+.chip-body{fill:var(--bg-card);stroke:var(--line-strong);stroke-width:1.2;opacity:.5;}
+.chip-body.lit{stroke:var(--copper);opacity:1;filter:drop-shadow(0 0 6px rgba(255,138,61,0.55));}
+.chip-pin{stroke:var(--ink-faint);stroke-width:1.4;opacity:.5;}
+.chip-pin.lit{stroke:var(--copper);opacity:1;filter:drop-shadow(0 0 3px var(--copper));}
+@keyframes chip-breathe{0%,100%{opacity:.55;}50%{opacity:1;}}
+
+.circuit-charge{opacity:0;}
+.circuit-charge.c-green{fill:var(--scope-green);filter:drop-shadow(0 0 6px var(--scope-green));}
+.circuit-charge.c-copper{fill:var(--copper);filter:drop-shadow(0 0 6px var(--copper));}
+.circuit-charge.c-cyan{fill:var(--neon-cyan);filter:drop-shadow(0 0 6px var(--neon-cyan));}
+.circuit-charge.run{
   opacity:1;
   offset-path:var(--trace-path);
-  animation:pulse-travel 3.2s linear infinite;
+  animation:charge-travel 3.2s linear infinite;
 }
-@keyframes pulse-travel{
+.circuit-charge.run.delay-charge{animation-delay:1.5s;}
+.circuit-charge.run.delay-charge2{animation-delay:.8s;animation-duration:2.4s;}
+@keyframes charge-travel{
   0%{offset-distance:0%;opacity:0;}
-  5%{opacity:1;}
-  92%{opacity:1;}
+  6%{opacity:1;}
+  90%{opacity:1;}
   100%{offset-distance:100%;opacity:0;}
 }
 
@@ -560,11 +587,38 @@ footer{
     </div>
   </section>
 
-  <!-- signal divider -->
-  <div class="signal-divider">
-    <svg viewBox="0 0 1180 90" preserveAspectRatio="none">
-      <path id="trace-1" class="signal-path" d="M0,45 L240,45 L260,15 L280,75 L300,45 L520,45 L540,20 L555,70 L575,30 L590,60 L610,45 L1180,45"/>
-      <circle class="signal-pulse" data-target="trace-1" r="3.5" style="--trace-path:path('M0,45 L240,45 L260,15 L280,75 L300,45 L520,45 L540,20 L555,70 L575,30 L590,60 L610,45 L1180,45')"/>
+  <!-- circuit divider -->
+  <div class="circuit-divider">
+    <svg viewBox="0 0 1180 150" preserveAspectRatio="none">
+      <path class="circuit-trace c-green" d="M0,45 L180,45 L180,15 L400,15 L400,60 L1180,60"/>
+      <path class="circuit-trace c-copper" d="M0,105 L140,105 L140,130 L360,130 L360,90 L1180,90"/>
+      <path class="circuit-trace c-cyan" d="M780,15 L780,45 L960,45 L960,105 L1180,105"/>
+
+      <circle class="circuit-pad c-green" cx="180" cy="45" r="3.4"/>
+      <circle class="circuit-pad c-green" cx="180" cy="15" r="3.4"/>
+      <circle class="circuit-pad c-green" cx="400" cy="15" r="3.4"/>
+      <circle class="circuit-pad c-green" cx="400" cy="60" r="3.4"/>
+      <circle class="circuit-pad c-copper" cx="140" cy="105" r="3.4"/>
+      <circle class="circuit-pad c-copper" cx="140" cy="130" r="3.4"/>
+      <circle class="circuit-pad c-copper" cx="360" cy="130" r="3.4"/>
+      <circle class="circuit-pad c-copper" cx="360" cy="90" r="3.4"/>
+      <circle class="circuit-pad c-cyan" cx="780" cy="15" r="3.4"/>
+      <circle class="circuit-pad c-cyan" cx="960" cy="45" r="3.4"/>
+      <circle class="circuit-pad c-cyan" cx="960" cy="105" r="3.4"/>
+
+      <rect class="chip-glow" x="515" y="48" width="120" height="58" rx="8"/>
+      <rect class="chip-body" x="520" y="53" width="110" height="48" rx="3"/>
+      <line class="chip-pin" x1="540" y1="53" x2="540" y2="38"/>
+      <line class="chip-pin" x1="575" y1="53" x2="575" y2="38"/>
+      <line class="chip-pin" x1="610" y1="53" x2="610" y2="38"/>
+      <line class="chip-pin" x1="540" y1="101" x2="540" y2="116"/>
+      <line class="chip-pin" x1="575" y1="101" x2="575" y2="116"/>
+      <line class="chip-pin" x1="610" y1="101" x2="610" y2="116"/>
+
+      <circle class="circuit-charge c-green" r="3" style="--trace-path:path('M0,45 L180,45 L180,15 L400,15 L400,60 L1180,60')"/>
+      <circle class="circuit-charge c-green delay-charge" r="3" style="--trace-path:path('M0,45 L180,45 L180,15 L400,15 L400,60 L1180,60')"/>
+      <circle class="circuit-charge c-copper delay-charge2" r="3" style="--trace-path:path('M0,105 L140,105 L140,130 L360,130 L360,90 L1180,90')"/>
+      <circle class="circuit-charge c-cyan" r="2.6" style="--trace-path:path('M780,15 L780,45 L960,45 L960,105 L1180,105')"/>
     </svg>
   </div>
 
@@ -719,11 +773,39 @@ footer{
     </div>
   </section>
 
-  <!-- signal divider -->
-  <div class="signal-divider">
-    <svg viewBox="0 0 1180 90" preserveAspectRatio="none">
-      <path id="trace-2" class="signal-path" d="M0,45 L420,45 L440,70 L460,15 L480,45 L700,45 L715,55 L730,30 L745,45 L1180,45"/>
-      <circle class="signal-pulse" data-target="trace-2" r="3.5" style="--trace-path:path('M0,45 L420,45 L440,70 L460,15 L480,45 L700,45 L715,55 L730,30 L745,45 L1180,45')"/>
+  <!-- circuit divider -->
+  <div class="circuit-divider">
+    <svg viewBox="0 0 1180 150" preserveAspectRatio="none">
+      <path class="circuit-trace c-cyan" d="M0,100 L200,100 L200,130 L420,130 L420,75 L1180,75"/>
+      <path class="circuit-trace c-green" d="M0,25 L160,25 L160,55 L380,55 L380,10 L1180,10"/>
+      <path class="circuit-trace c-copper" d="M760,130 L760,95 L940,95 L940,25 L1180,25"/>
+
+      <circle class="circuit-pad c-cyan" cx="200" cy="100" r="3.4"/>
+      <circle class="circuit-pad c-cyan" cx="200" cy="130" r="3.4"/>
+      <circle class="circuit-pad c-cyan" cx="420" cy="130" r="3.4"/>
+      <circle class="circuit-pad c-cyan" cx="420" cy="75" r="3.4"/>
+      <circle class="circuit-pad c-green" cx="160" cy="25" r="3.4"/>
+      <circle class="circuit-pad c-green" cx="160" cy="55" r="3.4"/>
+      <circle class="circuit-pad c-green" cx="380" cy="55" r="3.4"/>
+      <circle class="circuit-pad c-green" cx="380" cy="10" r="3.4"/>
+      <circle class="circuit-pad c-copper" cx="760" cy="130" r="3.4"/>
+      <circle class="circuit-pad c-copper" cx="760" cy="95" r="3.4"/>
+      <circle class="circuit-pad c-copper" cx="940" cy="95" r="3.4"/>
+      <circle class="circuit-pad c-copper" cx="940" cy="25" r="3.4"/>
+
+      <rect class="chip-glow" x="475" y="48" width="120" height="58" rx="8"/>
+      <rect class="chip-body" x="480" y="53" width="110" height="48" rx="3"/>
+      <line class="chip-pin" x1="500" y1="53" x2="500" y2="38"/>
+      <line class="chip-pin" x1="535" y1="53" x2="535" y2="38"/>
+      <line class="chip-pin" x1="570" y1="53" x2="570" y2="38"/>
+      <line class="chip-pin" x1="500" y1="101" x2="500" y2="116"/>
+      <line class="chip-pin" x1="535" y1="101" x2="535" y2="116"/>
+      <line class="chip-pin" x1="570" y1="101" x2="570" y2="116"/>
+
+      <circle class="circuit-charge c-cyan" r="3" style="--trace-path:path('M0,100 L200,100 L200,130 L420,130 L420,75 L1180,75')"/>
+      <circle class="circuit-charge c-green delay-charge" r="3" style="--trace-path:path('M0,25 L160,25 L160,55 L380,55 L380,10 L1180,10')"/>
+      <circle class="circuit-charge c-green delay-charge2" r="3" style="--trace-path:path('M0,25 L160,25 L160,55 L380,55 L380,10 L1180,10')"/>
+      <circle class="circuit-charge c-copper" r="2.6" style="--trace-path:path('M760,130 L760,95 L940,95 L940,25 L1180,25')"/>
     </svg>
   </div>
 
@@ -828,6 +910,29 @@ if(window.matchMedia('(hover:hover)').matches){
   });
 }
 
+// hero image — subtle cursor parallax (desktop only)
+const heroImg = document.querySelector('.hero-img');
+if(heroImg && window.matchMedia('(hover:hover)').matches){
+  heroImg.style.animation = 'none';
+  heroImg.style.transform = 'scale(1.06)';
+  window.addEventListener('mousemove', e=>{
+    const px = (e.clientX / window.innerWidth - 0.5) * 14;
+    const py = (e.clientY / window.innerHeight - 0.5) * 14;
+    heroImg.style.transform = `translate(${px}px, ${py}px) scale(1.06)`;
+  });
+}
+
+// project cards — tilt-toward-cursor
+document.querySelectorAll('.proj-card').forEach(card=>{
+  card.addEventListener('mousemove', e=>{
+    const r = card.getBoundingClientRect();
+    const rx = ((e.clientY - r.top) / r.height - 0.5) * -6;
+    const ry = ((e.clientX - r.left) / r.width - 0.5) * 6;
+    card.style.transform = `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-4px)`;
+  });
+  card.addEventListener('mouseleave', ()=>{ card.style.transform = ''; });
+});
+
 const els = document.querySelectorAll('.reveal');
 const io = new IntersectionObserver((entries)=>{
   entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
@@ -864,31 +969,42 @@ if(skillSection){
   skillIO.observe(skillSection);
 }
 
-// signal trace draw-in + traveling pulse
-const tracePaths = document.querySelectorAll('.signal-path');
-tracePaths.forEach(path=>{
-  const len = path.getTotalLength();
-  path.style.strokeDasharray = len;
-  path.style.strokeDashoffset = len;
-});
-const traceIO = new IntersectionObserver((entries)=>{
-  entries.forEach(entry=>{
-    if(entry.isIntersecting){
-      const path = entry.target;
-      const len = path.getTotalLength();
-      path.style.transition = 'stroke-dashoffset 1.8s ease-out, opacity .3s ease-out';
-      path.style.opacity = '.55';
-      path.style.strokeDashoffset = '0';
-      const id = path.id;
-      const pulse = document.querySelector('.signal-pulse[data-target="'+id+'"]');
-      if(pulse){
-        setTimeout(()=>pulse.classList.add('run'), 1900);
-      }
-      traceIO.unobserve(path);
-    }
+// circuit divider — traces draw in, pads + chip light up, current flows continuously
+document.querySelectorAll('.circuit-divider').forEach(div=>{
+  const traces = div.querySelectorAll('.circuit-trace');
+  const pads = div.querySelectorAll('.circuit-pad');
+  const chipParts = div.querySelectorAll('.chip-glow, .chip-body, .chip-pin');
+  const charges = div.querySelectorAll('.circuit-charge');
+  traces.forEach(path=>{
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
   });
-},{threshold:0.3});
-tracePaths.forEach(p=>traceIO.observe(p));
+  const dividerIO = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      traces.forEach((path,i)=>{
+        const len = path.getTotalLength();
+        setTimeout(()=>{
+          path.style.transition = 'stroke-dashoffset 1.1s ease-out, opacity .4s ease-out';
+          path.style.strokeDashoffset = '0';
+          path.classList.add('lit');
+        }, i*220);
+      });
+      pads.forEach((pad,i)=>{
+        setTimeout(()=>{
+          pad.style.transition = 'opacity .3s ease-out';
+          pad.classList.add('lit');
+          pad.style.animationDelay = (Math.random()*3)+'s';
+        }, 500 + i*90);
+      });
+      setTimeout(()=>{ chipParts.forEach(p=>p.classList.add('lit')); }, 900);
+      setTimeout(()=>{ charges.forEach(c=>c.classList.add('run')); }, 1200);
+      dividerIO.unobserve(entry.target);
+    });
+  },{threshold:0.3});
+  dividerIO.observe(div);
+});
 </script>
 
 </body>
