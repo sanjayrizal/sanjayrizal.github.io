@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Calculator Suite — Sanjay Rizal</title>
+<style>
+  :root{
+    --navy-900:#0B1B27;
+    --navy-800:#122A3A;
+    --navy-700:#1A374A;
+    --line:#5C87A0;
+    --line-dim:#2C4658;
+    --paper:#ECE6D6;
+    --paper-dim:#DCD5C1;
+    --ink:#182228;
+    --ink-soft:#3F4B52;
+    --amber:#D89A3E;
+    --amber-dim:#8A6A34;
+    --muted:#8FAAB9;
+    --off-white:#F2EFE6;
+    --good:#7FAE7A;
+    --bad:#C97B6A;
+    --radius:2px;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--navy-900);
+    color:var(--off-white);
+    font-family:'Times New Roman', Times, serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1280px; margin:0 auto; padding:56px 24px 100px; }
+
+  /* ---------- Head ---------- */
+  .head{ padding-bottom:28px; margin-bottom:28px; border-bottom:1px solid var(--line-dim); }
+  .head-row{ display:flex; align-items:baseline; gap:18px; flex-wrap:wrap; }
+  .head-index{ font-family:'Times New Roman', Times, serif; font-size:15px; color:var(--amber); }
+  .head-title{ font-family:'Times New Roman', Times, serif; font-weight:600; font-size:clamp(26px, 4.2vw, 40px); line-height:1.05; margin:0; }
+  .head-tag{ margin-left:auto; font-family:'Times New Roman', Times, serif; font-size:12px; color:var(--muted); border:1px solid var(--line-dim); padding:5px 10px; border-radius:2px; white-space:nowrap; }
+  .head-desc{ max-width:74ch; margin:14px 0 0; color:var(--muted); font-size:15px; line-height:1.6; }
+
+  /* ---------- Tabs ---------- */
+  .tabs{
+    display:flex;
+    gap:2px;
+    overflow-x:auto;
+    margin-bottom:28px;
+    border-bottom:1px solid var(--line-dim);
+  }
+  .tab-btn{
+    font-family:'Times New Roman', Times, serif;
+    font-size:12.5px;
+    color:var(--muted);
+    background:none;
+    border:none;
+    padding:12px 16px;
+    cursor:pointer;
+    white-space:nowrap;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+  }
+  .tab-btn .n{ color:var(--amber-dim); margin-right:6px; }
+  .tab-btn:hover{ color:var(--off-white); }
+  .tab-btn.active{ color:var(--off-white); border-bottom-color:var(--amber); }
+  .tab-btn.active .n{ color:var(--amber); }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; animation:panelIn 0.4s ease; }
+  @keyframes panelIn{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .tab-panel.active{ animation:none; }
+  }
+
+  .hero-card{ transition:box-shadow 0.3s ease; }
+  .hero-card.flash{ box-shadow:0 0 0 2px var(--amber); }
+  .hero-item .v{ transition:color 0.25s ease; }
+
+  .wrap{ animation:pageIn 0.5s ease; }
+  @keyframes pageIn{ from{ opacity:0; } to{ opacity:1; } }
+
+  .tab-intro{ color:var(--muted); font-size:14.5px; line-height:1.6; max-width:80ch; margin:0 0 24px; }
+
+  /* ---------- Layout ---------- */
+  .layout{ display:grid; grid-template-columns:1fr; gap:28px; align-items:start; }
+  @media (min-width:980px){ .layout{ grid-template-columns:1.1fr 0.9fr; } }
+  .col-results{ position:relative; }
+  @media (min-width:980px){ .col-results{ position:sticky; top:24px; } }
+
+  /* ---------- Panels ---------- */
+  .panel{ background:var(--navy-800); border:1px solid var(--line-dim); border-radius:var(--radius); margin-bottom:20px; }
+  .panel-bar{ display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-bottom:1px solid var(--line-dim); font-family:'Times New Roman', Times, serif; font-size:12px; color:var(--muted); }
+  .panel-bar .no{ color:var(--amber); }
+  .panel-body{ padding:18px 18px 20px; }
+
+  /* ---------- Load table (off-grid tab) ---------- */
+  .table-scroll{ overflow-x:auto; margin:0 -4px; }
+  table.loads{ width:100%; min-width:520px; border-collapse:collapse; font-size:13px; }
+  table.loads th{ text-align:left; font-family:'Times New Roman', Times, serif; font-weight:500; font-size:11px; color:var(--muted); padding:0 6px 8px; border-bottom:1px solid var(--line-dim); }
+  table.loads td{ padding:6px 6px; border-bottom:1px solid rgba(92,135,160,0.15); vertical-align:middle; }
+  table.loads input[type=text]{ width:100%; background:transparent; border:none; color:var(--off-white); font-family:'Times New Roman', Times, serif; font-size:13px; padding:5px 2px; }
+  table.loads input[type=number]{ width:100%; background:var(--navy-700); border:1px solid var(--line-dim); color:var(--off-white); font-family:'Times New Roman', Times, serif; font-size:12.5px; padding:5px 6px; border-radius:2px; }
+  table.loads input:focus{ outline:1px solid var(--amber); }
+  table.loads td.num{ font-family:'Times New Roman', Times, serif; text-align:right; color:var(--muted); white-space:nowrap; }
+  table.loads td.del{ text-align:center; width:28px; }
+  .del-btn{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:15px; line-height:1; padding:2px 4px; }
+  .del-btn:hover{ color:var(--bad); }
+  .loads-total-row td{ border-top:1px solid var(--line-dim); border-bottom:none; padding-top:10px; font-family:'Times New Roman', Times, serif; font-weight:600; color:var(--off-white); }
+  .add-row-btn{ margin-top:12px; font-family:'Times New Roman', Times, serif; font-size:12px; color:var(--muted); background:none; border:1px dashed var(--line-dim); padding:8px 14px; border-radius:2px; cursor:pointer; width:100%; }
+  .add-row-btn:hover{ color:var(--off-white); border-color:var(--line); }
+
+  /* ---------- Param grid ---------- */
+  .param-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px 18px; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-size:12px; color:var(--muted); display:flex; align-items:baseline; gap:6px; }
+  .field label .unit{ font-family:'Times New Roman', Times, serif; font-size:10.5px; color:var(--amber-dim); }
+  .field input, .field select{ background:var(--navy-700); border:1px solid var(--line-dim); color:var(--off-white); font-family:'Times New Roman', Times, serif; font-size:13.5px; padding:8px 10px; border-radius:2px; }
+  .field input:focus, .field select:focus{ outline:1px solid var(--amber); }
+  .field .hint{ font-size:10.5px; color:#5F7789; }
+  .radio-row{ display:flex; gap:16px; font-size:13px; color:var(--muted); margin-bottom:14px; }
+  .radio-row label{ display:flex; align-items:center; gap:6px; cursor:pointer; }
+
+  /* ---------- Buttons ---------- */
+  .actions{ display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; }
+  .btn{ font-family:'Times New Roman', Times, serif; font-size:12.5px; color:var(--navy-900); background:var(--amber); border:none; text-decoration:none; padding:10px 16px; border-radius:2px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+  .btn:hover{ background:#E9B45C; }
+  .btn.ghost{ background:transparent; color:var(--muted); border:1px solid var(--line-dim); }
+  .btn.ghost:hover{ color:var(--off-white); border-color:var(--line); }
+
+  /* ---------- Results ---------- */
+  .hero-card{ background:var(--paper); color:var(--ink); border-radius:var(--radius); padding:20px 20px 6px; margin-bottom:20px; }
+  .hero-title{ font-family:'Times New Roman', Times, serif; font-size:11px; color:var(--ink-soft); margin:0 0 14px; }
+  .hero-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 14px; padding-bottom:16px; }
+  .hero-item .k{ font-family:'Times New Roman', Times, serif; font-size:10.5px; color:var(--ink-soft); margin-bottom:4px; }
+  .hero-item .v{ font-family:'Times New Roman', Times, serif; font-weight:600; font-size:19px; color:var(--ink); }
+  .hero-item .v small{ font-family:'Times New Roman', Times, serif; font-weight:400; font-size:11px; color:var(--ink-soft); }
+
+  .results-table{ width:100%; border-collapse:collapse; font-family:'Times New Roman', Times, serif; font-size:12.5px; }
+  .results-table tr{ border-top:1px solid var(--line-dim); }
+  .results-table tr:first-child{ border-top:none; }
+  .results-table td{ padding:8px 0; }
+  .results-table td:first-child{ color:var(--muted); width:60%; }
+  .results-table td:last-child{ color:var(--off-white); text-align:right; }
+
+  .check-row{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-top:1px solid var(--line-dim); font-size:13px; gap:10px; }
+  .check-row:first-child{ border-top:none; }
+  .check-label{ color:var(--muted); }
+  .check-status{ font-family:'Times New Roman', Times, serif; font-size:11.5px; padding:3px 9px; border-radius:10px; white-space:nowrap; }
+  .check-status.good{ background:rgba(127,174,122,0.18); color:var(--good); }
+  .check-status.bad{ background:rgba(201,123,106,0.18); color:var(--bad); }
+
+  .note{ font-size:12.5px; color:var(--muted); line-height:1.6; padding:14px 16px; border:1px dashed var(--line-dim); border-radius:2px; margin-top:4px; }
+  .note strong{ color:var(--off-white); }
+  .note.small{ font-size:11.5px; margin-top:14px; }
+
+  /* ---------- small data table (cable / cashflow) ---------- */
+  table.data-table{ width:100%; border-collapse:collapse; font-family:'Times New Roman', Times, serif; font-size:12px; }
+  table.data-table th{ text-align:right; color:var(--muted); font-weight:500; padding:6px 4px; border-bottom:1px solid var(--line-dim); font-size:11px; }
+  table.data-table th:first-child, table.data-table td:first-child{ text-align:left; }
+  table.data-table td{ text-align:right; padding:6px 4px; border-bottom:1px solid rgba(92,135,160,0.15); }
+  table.data-table tr.pass td{ color:var(--good); }
+  table.data-table tr.fail td{ color:var(--bad); }
+  table.data-table tr.pass td:first-child, table.data-table tr.fail td:first-child{ color:var(--off-white); }
+
+  @media print{
+    body{ background:#fff; color:#000; }
+    .tabs, .actions, .add-row-btn, .del-btn{ display:none !important; }
+    .tab-panel{ display:block !important; }
+    .panel, .hero-card{ border:1px solid #999; background:#fff; break-inside:avoid; }
+    .head-tag, .btn{ display:none !important; }
+    input, select{ color:#000 !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="head">
+    <div class="head-row">
+      <span class="head-index">07</span>
+      <h1 class="head-title">Solar Calculator Suite</h1>
+    </div>
+    <p class="head-desc">
+      Six linked calculators covering a PV project end to end: off-grid and
+      grid-tied sizing, string voltage safety checks, cable sizing, ground-mount
+      row spacing, and financial / CO₂ payback. Every field recalculates live.
+    </p>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="offgrid"><span class="n">01</span>Off-Grid Sizing</button>
+    <button class="tab-btn" data-tab="ongrid"><span class="n">02</span>Grid-Tied Sizing</button>
+    <button class="tab-btn" data-tab="string"><span class="n">03</span>String &amp; Temp Check</button>
+    <button class="tab-btn" data-tab="cable"><span class="n">04</span>Cable &amp; Voltage Drop</button>
+    <button class="tab-btn" data-tab="spacing"><span class="n">05</span>Row Spacing</button>
+    <button class="tab-btn" data-tab="financial"><span class="n">06</span>Financial &amp; CO₂</button>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- TAB 01 — OFF-GRID SIZING                                 -->
+  <!-- ======================================================= -->
+  <div class="tab-panel active" id="tab-offgrid">
+    <p class="tab-intro">Load-to-PV-to-battery sizing for standalone systems with battery backup — same structure as a manual load-schedule worksheet.</p>
+    <div class="layout">
+      <div class="col-inputs">
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">A</span> &nbsp;Load Schedule</span><span id="og_loadCount"></span></div>
+          <div class="panel-body">
+            <div class="table-scroll">
+            <table class="loads" id="og_loadsTable">
+              <thead><tr><th style="width:28%">Load</th><th style="width:12%">Qty</th><th style="width:14%">Watts</th><th style="width:14%">Hr/day</th><th style="width:16%">Total W</th><th style="width:16%">Wh/day</th><th></th></tr></thead>
+              <tbody id="og_loadsBody"></tbody>
+              <tfoot><tr class="loads-total-row"><td colspan="4">Total</td><td class="num" id="og_totalWatt">—</td><td class="num" id="og_totalWh">—</td><td></td></tr></tfoot>
+            </table>
+            </div>
+            <button class="add-row-btn" id="og_addLoadBtn">+ Add load</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">B</span> &nbsp;System &amp; Environmental Parameters</span></div>
+          <div class="panel-body"><div class="param-grid" id="og_sysParams"></div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">C</span> &nbsp;PV Module Specification</span></div>
+          <div class="panel-body"><div class="param-grid" id="og_moduleParams"></div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">D</span> &nbsp;Battery Specification</span></div>
+          <div class="panel-body"><div class="param-grid" id="og_batteryParams"></div></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="og_printBtn">Print / Export</button>
+          <button class="btn ghost" id="og_resetBtn">Reset to defaults</button>
+        </div>
+        <p class="note small">
+          <strong>Method.</strong> Connected load → daily energy demand → PV
+          array area &amp; module count → string sizing → charge-controller
+          and inverter rating → battery bank sizing for the chosen autonomy
+          period. Validate the final design in simulation software (e.g. PVsyst).
+        </p>
+      </div>
+
+      <div class="col-results">
+        <div class="hero-card" id="og_heroCard">
+          <p class="hero-title">Summary — recommended system</p>
+          <div class="hero-grid">
+            <div class="hero-item"><div class="k">Connected load</div><div class="v" id="og_hTotalWatt">—</div></div>
+            <div class="hero-item"><div class="k">Daily energy demand</div><div class="v" id="og_hTotalWh">—</div></div>
+            <div class="hero-item"><div class="k">PV array</div><div class="v" id="og_hArray">—</div></div>
+            <div class="hero-item"><div class="k">String config</div><div class="v" id="og_hString">—</div></div>
+            <div class="hero-item"><div class="k">Battery bank</div><div class="v" id="og_hBattery">—</div></div>
+            <div class="hero-item"><div class="k">Inverter / controller</div><div class="v" id="og_hInvCtrl">—</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-bar"><span>Design Checks</span></div>
+          <div class="panel-body">
+            <div class="check-row"><span class="check-label">Battery bank vs. autonomy energy need</span><span class="check-status" id="og_checkAutonomy">—</span></div>
+            <div class="check-row"><span class="check-label">Est. daily PV yield vs. daily demand</span><span class="check-status" id="og_checkYield">—</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">QUICK</span> &nbsp;Battery Backup Runtime</span></div>
+          <div class="panel-body">
+            <div class="param-grid" style="margin-bottom:14px;">
+              <div class="field"><label>Critical load <span class="unit">W</span></label><input type="number" id="og_backupLoad" value="500"></div>
+              <div class="field"><label>Inverter efficiency <span class="unit">ratio</span></label><input type="number" id="og_backupEff" value="0.9" step="0.01"></div>
+            </div>
+            <table class="results-table"><tr><td>Estimated runtime on full battery bank</td><td id="og_backupRuntime">—</td></tr></table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">CALC</span> &nbsp;Intermediate Calculations</span></div>
+          <div class="panel-body">
+            <table class="results-table">
+              <tr><td>DC Ah / day (load ÷ system V)</td><td id="og_oDCAh">—</td></tr>
+              <tr><td>Ah total (× error margin)</td><td id="og_oAhTotal">—</td></tr>
+              <tr><td>I total (÷ avg. sun hours)</td><td id="og_oItotal">—</td></tr>
+              <tr><td>Battery capacity required</td><td id="og_oBattCap">—</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">OUT</span> &nbsp;Final Design Parameters</span></div>
+          <div class="panel-body">
+            <table class="results-table">
+              <tr><td>PV area required</td><td id="og_oArea">—</td></tr>
+              <tr><td>No. of PV modules (exact)</td><td id="og_oModules">—</td></tr>
+              <tr><td>No. of PV in parallel</td><td id="og_oParallel">—</td></tr>
+              <tr><td>No. of PV in series (per sheet formula)</td><td id="og_oSeries">—</td></tr>
+              <tr><td>Charge controller size</td><td id="og_oCC">—</td></tr>
+              <tr><td>Inverter size</td><td id="og_oInv">—</td></tr>
+              <tr><td>Battery — series</td><td id="og_oBattSeries">—</td></tr>
+              <tr><td>Battery — parallel</td><td id="og_oBattParallel">—</td></tr>
+            </table>
+            <p class="note small" id="og_seriesNote"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- TAB 02 — GRID-TIED SIZING                                -->
+  <!-- ======================================================= -->
+  <div class="tab-panel" id="tab-ongrid">
+    <p class="tab-intro">Size a grid-connected array either from a target system size or backward from a monthly consumption figure — covers array, inverter, and expected annual yield.</p>
+    <div class="layout">
+      <div class="col-inputs">
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">A</span> &nbsp;Sizing Basis</span></div>
+          <div class="panel-body">
+            <div class="radio-row">
+              <label><input type="radio" name="og2_basis" value="consumption" checked> Size from monthly consumption</label>
+              <label><input type="radio" name="og2_basis" value="capacity"> Size from target capacity</label>
+            </div>
+            <div class="param-grid">
+              <div class="field"><label>Average monthly consumption <span class="unit">kWh</span></label><input type="number" id="og2_monthly" value="400"><div class="hint">from utility bill — used if basis = consumption</div></div>
+              <div class="field"><label>Target system size <span class="unit">kWp</span></label><input type="number" id="og2_targetKwp" value="5"><div class="hint">used if basis = target capacity</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">B</span> &nbsp;Site &amp; Equipment Parameters</span></div>
+          <div class="panel-body"><div class="param-grid" id="og2_params"></div></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="og2_printBtn">Print / Export</button>
+          <button class="btn ghost" id="og2_resetBtn">Reset to defaults</button>
+        </div>
+        <p class="note small">
+          <strong>Method.</strong> Daily energy target (from bill or target
+          capacity) → required array kWp → module count → inverter AC rating
+          from target DC:AC ratio → expected annual generation from specific
+          yield (sun hours × performance ratio × 365).
+        </p>
+      </div>
+
+      <div class="col-results">
+        <div class="hero-card" id="og2_heroCard">
+          <p class="hero-title">Summary — grid-tied system</p>
+          <div class="hero-grid">
+            <div class="hero-item"><div class="k">Recommended array</div><div class="v" id="og2_hArray">—</div></div>
+            <div class="hero-item"><div class="k">Inverter</div><div class="v" id="og2_hInverter">—</div></div>
+            <div class="hero-item"><div class="k">Annual generation</div><div class="v" id="og2_hGen">—</div></div>
+            <div class="hero-item"><div class="k">Specific yield</div><div class="v" id="og2_hYield">—</div></div>
+            <div class="hero-item"><div class="k">Actual DC:AC ratio</div><div class="v" id="og2_hRatio">—</div></div>
+            <div class="hero-item"><div class="k">Consumption coverage</div><div class="v" id="og2_hCoverage">—</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">OUT</span> &nbsp;Calculation Detail</span></div>
+          <div class="panel-body">
+            <table class="results-table">
+              <tr><td>Daily energy target</td><td id="og2_oDailyTarget">—</td></tr>
+              <tr><td>Required array size (exact)</td><td id="og2_oReqKwp">—</td></tr>
+              <tr><td>No. of modules</td><td id="og2_oModules">—</td></tr>
+              <tr><td>Actual array size</td><td id="og2_oActualKwp">—</td></tr>
+              <tr><td>Recommended inverter AC rating</td><td id="og2_oInvAC">—</td></tr>
+              <tr><td>No. of inverter units</td><td id="og2_oInvUnits">—</td></tr>
+              <tr><td>Annual generation (year 1)</td><td id="og2_oAnnualGen">—</td></tr>
+            </table>
+          </div>
+        </div>
+        <p class="note">
+          Feed this array's module count and string voltage into the
+          <strong>String &amp; Temp Check</strong> tab to validate series/parallel
+          wiring against your chosen inverter's voltage window.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- TAB 03 — STRING & TEMPERATURE CHECK                      -->
+  <!-- ======================================================= -->
+  <div class="tab-panel" id="tab-string">
+    <p class="tab-intro">Checks that a proposed series string stays within the inverter's safe input-voltage window across the site's temperature extremes — module Voc rises in cold weather, Vmpp falls in heat.</p>
+    <div class="layout">
+      <div class="col-inputs">
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">A</span> &nbsp;Module Electrical Parameters</span></div>
+          <div class="panel-body"><div class="param-grid" id="st_moduleParams"></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">B</span> &nbsp;Site Temperature Extremes</span></div>
+          <div class="panel-body"><div class="param-grid" id="st_tempParams"></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">C</span> &nbsp;Proposed String &amp; Inverter Window</span></div>
+          <div class="panel-body"><div class="param-grid" id="st_stringParams"></div></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="st_printBtn">Print / Export</button>
+          <button class="btn ghost" id="st_resetBtn">Reset to defaults</button>
+        </div>
+        <p class="note small">
+          <strong>Method.</strong> Voc<sub>cold</sub> = Voc<sub>STC</sub> ×
+          (1 + β<sub>Voc</sub> × (T<sub>min</sub> − 25)). Vmpp<sub>hot</sub> =
+          Vmpp<sub>STC</sub> × (1 + β<sub>Vmpp</sub> × (T<sub>max,cell</sub> − 25)).
+          Follows the same logic as NEC 690.7 string voltage correction.
+        </p>
+      </div>
+      <div class="col-results">
+        <div class="hero-card" id="st_heroCard">
+          <p class="hero-title">Summary — string voltage check</p>
+          <div class="hero-grid">
+            <div class="hero-item"><div class="k">Max string voltage (cold)</div><div class="v" id="st_hMaxV">—</div></div>
+            <div class="hero-item"><div class="k">Min operating voltage (hot)</div><div class="v" id="st_hMinV">—</div></div>
+            <div class="hero-item"><div class="k">Suggested max Ns</div><div class="v" id="st_hMaxNs">—</div></div>
+            <div class="hero-item"><div class="k">Suggested min Ns</div><div class="v" id="st_hMinNs">—</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-bar"><span>Design Checks</span></div>
+          <div class="panel-body">
+            <div class="check-row"><span class="check-label">Max string V (cold) ≤ inverter max input V</span><span class="check-status" id="st_checkMax">—</span></div>
+            <div class="check-row"><span class="check-label">Min operating V (hot) ≥ inverter MPPT min V</span><span class="check-status" id="st_checkMin">—</span></div>
+            <div class="check-row"><span class="check-label">Max operating V (cold, at Vmpp) ≤ MPPT max V</span><span class="check-status" id="st_checkMppMax">—</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">CALC</span> &nbsp;Detail</span></div>
+          <div class="panel-body">
+            <table class="results-table">
+              <tr><td>Voc at min temperature</td><td id="st_oVocCold">—</td></tr>
+              <tr><td>Vmpp at max cell temperature</td><td id="st_oVmppHot">—</td></tr>
+              <tr><td>Vmpp at min temperature</td><td id="st_oVmppCold">—</td></tr>
+              <tr><td>Max string voltage (Ns × Voc,cold)</td><td id="st_oMaxStringV">—</td></tr>
+              <tr><td>Min operating voltage (Ns × Vmpp,hot)</td><td id="st_oMinOpV">—</td></tr>
+              <tr><td>Max operating voltage (Ns × Vmpp,cold)</td><td id="st_oMaxOpV">—</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- TAB 04 — CABLE & VOLTAGE DROP                            -->
+  <!-- ======================================================= -->
+  <div class="tab-panel" id="tab-cable">
+    <p class="tab-intro">Sizes DC or AC cable runs to keep voltage drop within an acceptable limit, and shows the resulting drop across every standard conductor size.</p>
+    <div class="layout">
+      <div class="col-inputs">
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">A</span> &nbsp;Circuit Parameters</span></div>
+          <div class="panel-body">
+            <div class="param-grid">
+              <div class="field"><label>Circuit type</label>
+                <select id="cb_type">
+                  <option value="dc">DC</option>
+                  <option value="ac1">AC — single phase</option>
+                  <option value="ac3">AC — three phase</option>
+                </select>
+              </div>
+              <div class="field"><label>Conductor material</label>
+                <select id="cb_material"><option value="cu">Copper</option><option value="al">Aluminum</option></select>
+              </div>
+              <div class="field"><label>Current <span class="unit">A</span></label><input type="number" id="cb_current" value="20"></div>
+              <div class="field"><label>One-way cable length <span class="unit">m</span></label><input type="number" id="cb_length" value="30"></div>
+              <div class="field"><label>Nominal voltage <span class="unit">V</span></label><input type="number" id="cb_voltage" value="24"></div>
+              <div class="field"><label>Allowed voltage drop <span class="unit">%</span></label><input type="number" id="cb_vdAllow" value="3" step="0.1"></div>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="cb_printBtn">Print / Export</button>
+          <button class="btn ghost" id="cb_resetBtn">Reset to defaults</button>
+        </div>
+        <p class="note small">
+          <strong>Method.</strong> VD (V) = k × L × I × ρ ÷ A, where k = 2 for
+          DC / single-phase (round trip) or √3 for three-phase, ρ is
+          resistivity (Cu ≈ 0.0175, Al ≈ 0.0282 Ω·mm²/m), L is one-way length,
+          and A is cross-section. Three-phase figures are resistive-only —
+          for long runs, also check cable reactance against manufacturer data.
+        </p>
+      </div>
+      <div class="col-results">
+        <div class="hero-card" id="cb_heroCard">
+          <p class="hero-title">Summary — recommended cable</p>
+          <div class="hero-grid">
+            <div class="hero-item"><div class="k">Min. required size</div><div class="v" id="cb_hReqSize">—</div></div>
+            <div class="hero-item"><div class="k">Recommended std. size</div><div class="v" id="cb_hStdSize">—</div></div>
+            <div class="hero-item"><div class="k">Actual voltage drop</div><div class="v" id="cb_hVd">—</div></div>
+            <div class="hero-item"><div class="k">Power loss in cable</div><div class="v" id="cb_hLoss">—</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-bar"><span>Voltage Drop by Standard Size</span></div>
+          <div class="panel-body">
+            <table class="data-table">
+              <thead><tr><th style="text-align:left">Size (mm²)</th><th>VD (V)</th><th>VD (%)</th><th>Status</th></tr></thead>
+              <tbody id="cb_sizeTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- TAB 05 — ROW SPACING                                     -->
+  <!-- ======================================================= -->
+  <div class="tab-panel" id="tab-spacing">
+    <p class="tab-intro">Minimum front-to-front row pitch for a fixed-tilt ground-mount array so rows don't shade each other at solar noon on the design day (worst case: winter solstice).</p>
+    <div class="layout">
+      <div class="col-inputs">
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">A</span> &nbsp;Site &amp; Array Geometry</span></div>
+          <div class="panel-body"><div class="param-grid" id="sp_params"></div></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="sp_printBtn">Print / Export</button>
+          <button class="btn ghost" id="sp_resetBtn">Reset to defaults</button>
+        </div>
+        <p class="note small">
+          <strong>Method.</strong> Solar noon altitude α = 90° − |latitude −
+          declination|. Shadow length = (panel length × sin tilt) ÷ tan α.
+          Minimum pitch = panel ground footprint (length × cos tilt) + shadow
+          length. Default declination (−23.45°) is the winter solstice
+          worst case — override it to check a different design day.
+        </p>
+      </div>
+      <div class="col-results">
+        <div class="hero-card" id="sp_heroCard">
+          <p class="hero-title">Summary — row spacing</p>
+          <div class="hero-grid">
+            <div class="hero-item"><div class="k">Solar noon altitude</div><div class="v" id="sp_hAlt">—</div></div>
+            <div class="hero-item"><div class="k">Min. row pitch</div><div class="v" id="sp_hPitch">—</div></div>
+            <div class="hero-item"><div class="k">Ground coverage ratio</div><div class="v" id="sp_hGcr">—</div></div>
+            <div class="hero-item"><div class="k">Clear shadow gap</div><div class="v" id="sp_hShadow">—</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">CALC</span> &nbsp;Detail</span></div>
+          <div class="panel-body">
+            <table class="results-table">
+              <tr><td>Panel vertical height (H)</td><td id="sp_oH">—</td></tr>
+              <tr><td>Panel ground footprint (Wg)</td><td id="sp_oWg">—</td></tr>
+              <tr><td>Shadow length behind row</td><td id="sp_oShadow">—</td></tr>
+              <tr><td>Min. row pitch (front to front)</td><td id="sp_oPitch">—</td></tr>
+              <tr><td>Ground coverage ratio (GCR)</td><td id="sp_oGcr">—</td></tr>
+            </table>
+            <p class="note small" id="sp_warnNote"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- TAB 06 — FINANCIAL & CO2                                 -->
+  <!-- ======================================================= -->
+  <div class="tab-panel" id="tab-financial">
+    <p class="tab-intro">Simple payback, lifetime savings, and CO₂ offset for a sized system — same categories reported in your PVsyst / SAM outputs, made editable.</p>
+    <div class="layout">
+      <div class="col-inputs">
+        <div class="panel">
+          <div class="panel-bar"><span><span class="no">A</span> &nbsp;System &amp; Cost Parameters</span></div>
+          <div class="panel-body"><div class="param-grid" id="fi_params"></div></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="fi_printBtn">Print / Export</button>
+          <button class="btn ghost" id="fi_resetBtn">Reset to defaults</button>
+        </div>
+        <p class="note small">
+          <strong>Method.</strong> Simple payback = CAPEX ÷ (year-1 revenue −
+          annual O&amp;M). Lifetime figures apply annual module degradation to
+          each year's generation before summing. Default grid emission factor
+          (0.003 kgCO₂/kWh) matches the IEA lifecycle figure used in your own
+          Bhyandol SAM report for Nepal's hydro-heavy grid — replace it for
+          other countries.
+        </p>
+      </div>
+      <div class="col-results">
+        <div class="hero-card" id="fi_heroCard">
+          <p class="hero-title">Summary — financial &amp; environmental</p>
+          <div class="hero-grid">
+            <div class="hero-item"><div class="k">CAPEX</div><div class="v" id="fi_hCapex">—</div></div>
+            <div class="hero-item"><div class="k">Year-1 generation</div><div class="v" id="fi_hGen1">—</div></div>
+            <div class="hero-item"><div class="k">Simple payback</div><div class="v" id="fi_hPayback">—</div></div>
+            <div class="hero-item"><div class="k">Lifetime net savings</div><div class="v" id="fi_hSavings">—</div></div>
+            <div class="hero-item"><div class="k">Lifetime CO₂ saved</div><div class="v" id="fi_hCo2">—</div></div>
+            <div class="hero-item"><div class="k">Annual CO₂ saved (yr 1)</div><div class="v" id="fi_hCo2Yr1">—</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-bar"><span>Cumulative Cash Flow</span></div>
+          <div class="panel-body">
+            <table class="data-table">
+              <thead><tr><th style="text-align:left">Year</th><th>Generation (kWh)</th><th>Cumulative net cash flow</th></tr></thead>
+              <tbody id="fi_cashTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+
+  /* ============================================================ */
+  /* Shared helpers                                                */
+  /* ============================================================ */
+  function fmt(n, digits){
+    if(!isFinite(n)) return '—';
+    digits = digits === undefined ? 2 : digits;
+    return n.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:digits});
+  }
+  function num(id){ var el=document.getElementById(id); return parseFloat(el.value)||0; }
+
+  var flashTimers = {};
+  function flashHero(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.classList.add('flash');
+    clearTimeout(flashTimers[id]);
+    flashTimers[id] = setTimeout(function(){ el.classList.remove('flash'); }, 350);
+  }
+
+  function renderParamGroup(container, defs, state, onchange){
+    container.innerHTML = '';
+    defs.forEach(function(p){
+      var field = document.createElement('div');
+      field.className = 'field';
+      var label = document.createElement('label');
+      label.innerHTML = p.label + (p.unit ? ' <span class="unit">' + p.unit + '</span>' : '');
+      field.appendChild(label);
+      var input = document.createElement('input');
+      input.type = 'number'; input.step = 'any';
+      input.value = state[p.id];
+      input.title = p.hint || '';
+      input.id = p.fieldId || '';
+      input.addEventListener('input', function(){ state[p.id] = parseFloat(input.value) || 0; onchange(); });
+      field.appendChild(input);
+      if(p.hint){
+        var hint = document.createElement('div'); hint.className='hint'; hint.textContent = p.hint;
+        field.appendChild(hint);
+      }
+      container.appendChild(field);
+    });
+  }
+
+  /* ============================================================ */
+  /* TAB SWITCHING                                                 */
+  /* ============================================================ */
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  tabBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabBtns.forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  /* ============================================================ */
+  /* TAB 01 — OFF-GRID SIZING                                      */
+  /* ============================================================ */
+  (function(){
+    var DEFAULT_LOADS = [
+      {name:'LED', qty:25, watts:15, hours:10},
+      {name:'Refrigerator', qty:1, watts:150, hours:24},
+      {name:'Laptop', qty:2, watts:50, hours:6},
+      {name:'TV', qty:10, watts:120, hours:9},
+      {name:'Wifi router', qty:2, watts:10, hours:24},
+      {name:'Fans', qty:4, watts:90, hours:8},
+      {name:'AC', qty:3, watts:90, hours:15},
+      {name:'Washing machine', qty:2, watts:1000, hours:3},
+      {name:'Water Pump', qty:1, watts:500, hours:0.5},
+      {name:'Misc Charges', qty:7, watts:50, hours:3}
+    ];
+    var SYS_PARAMS = [
+      {id:'Gin', label:'Solar Irradiance (Gᵢₙ)', unit:'kWh/m²/day', def:4.7, hint:'Avg. peak-sun irradiance for the site'},
+      {id:'etaPV', label:'PV Efficiency (η_PV)', unit:'ratio', def:0.2, hint:'Module conversion efficiency'},
+      {id:'etaOut', label:'System Efficiency (η_OUT)', unit:'ratio', def:0.8, hint:'Combined balance-of-system efficiency'},
+      {id:'Df', label:'PV Derating Factor (Df)', unit:'ratio', def:0.9, hint:'Typical range 0.88–0.96'},
+      {id:'PSI', label:'Peak Solar Insolation (PSI)', unit:'W/m²', def:1000, hint:'Standard test condition irradiance'},
+      {id:'sunHours', label:'Average Sun Hours', unit:'hrs', def:5, hint:'Avg. peak sun hours/day for the site'},
+      {id:'errorMargin', label:'Error Margin', unit:'factor', def:1.2, hint:'Safety margin on daily Ah demand'},
+      {id:'surgeCurrent', label:'Surge Current Factor', unit:'factor', def:2.5, hint:'For controller sizing against inrush loads'},
+      {id:'powerFactor', label:'Power Factor', unit:'ratio', def:0.8, hint:'For inverter VA sizing'},
+      {id:'DoD', label:'Depth of Discharge (DoD)', unit:'ratio', def:0.8, hint:'Usable fraction of battery capacity'},
+      {id:'autonomyDays', label:'Autonomous Days (NA)', unit:'days', def:2, hint:'Backup days with no solar input'},
+      {id:'etaIN', label:'η_IN (Inverter Efficiency)', unit:'ratio', def:0.95, hint:'Inverter conversion efficiency'},
+      {id:'etaNet', label:'η_net (Net System Eff.)', unit:'ratio', def:0.8, hint:'Net efficiency used in battery sizing'}
+    ];
+    var MODULE_PARAMS = [
+      {id:'Pmax', label:'Module Power (Pmax)', unit:'W', def:250},
+      {id:'Voc', label:'Open Circuit Voltage (Voc)', unit:'V', def:35.17},
+      {id:'Isc', label:'Short Circuit Current (Isc)', unit:'A', def:9.17},
+      {id:'Vmpp', label:'Max Power Voltage (Vmpp)', unit:'V', def:28.49},
+      {id:'Impp', label:'Max Power Current (Impp)', unit:'A', def:8.8},
+      {id:'Vsys', label:'System Voltage', unit:'V', def:24}
+    ];
+    var BATTERY_PARAMS = [
+      {id:'Vbatt', label:'Battery Voltage', unit:'V', def:12},
+      {id:'AhBatt', label:'Battery Capacity', unit:'Ah', def:320}
+    ];
+    var STORAGE_KEY = 'pvcalc_offgrid_v2';
+    var state = { loads: DEFAULT_LOADS.map(function(l){return Object.assign({},l);}), params:{} };
+    SYS_PARAMS.concat(MODULE_PARAMS).concat(BATTERY_PARAMS).forEach(function(p){ state.params[p.id]=p.def; });
+
+    function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); if(raw){ var parsed=JSON.parse(raw); if(parsed.loads&&parsed.params){ state=parsed; } } }catch(e){} }
+    function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+    var loadsBody = document.getElementById('og_loadsBody');
+
+    function renderLoads(){
+      loadsBody.innerHTML='';
+      state.loads.forEach(function(row,i){
+        var tr=document.createElement('tr');
+        var tdName=document.createElement('td');
+        var inName=document.createElement('input'); inName.type='text'; inName.value=row.name;
+        inName.addEventListener('input', function(){ row.name=inName.value; saveState(); });
+        tdName.appendChild(inName);
+
+        var tdQty=document.createElement('td');
+        var inQty=document.createElement('input'); inQty.type='number'; inQty.min=0; inQty.step='any'; inQty.value=row.qty;
+        inQty.addEventListener('input', function(){ row.qty=parseFloat(inQty.value)||0; recalc(); });
+        tdQty.appendChild(inQty);
+
+        var tdWatts=document.createElement('td');
+        var inWatts=document.createElement('input'); inWatts.type='number'; inWatts.min=0; inWatts.step='any'; inWatts.value=row.watts;
+        inWatts.addEventListener('input', function(){ row.watts=parseFloat(inWatts.value)||0; recalc(); });
+        tdWatts.appendChild(inWatts);
+
+        var tdHours=document.createElement('td');
+        var inHours=document.createElement('input'); inHours.type='number'; inHours.min=0; inHours.max=24; inHours.step='any'; inHours.value=row.hours;
+        inHours.addEventListener('input', function(){ row.hours=parseFloat(inHours.value)||0; recalc(); });
+        tdHours.appendChild(inHours);
+
+        var tdTotalW=document.createElement('td'); tdTotalW.className='num';
+        var tdWh=document.createElement('td'); tdWh.className='num';
+
+        var tdDel=document.createElement('td'); tdDel.className='del';
+        var delBtn=document.createElement('button'); delBtn.className='del-btn'; delBtn.textContent='✕';
+        delBtn.addEventListener('click', function(){ state.loads.splice(i,1); renderLoads(); recalc(); });
+        tdDel.appendChild(delBtn);
+
+        tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdWatts); tr.appendChild(tdHours); tr.appendChild(tdTotalW); tr.appendChild(tdWh); tr.appendChild(tdDel);
+        tr._totalWCell=tdTotalW; tr._whCell=tdWh;
+        loadsBody.appendChild(tr);
+      });
+      updateLoadTotalsDisplay();
+    }
+    function updateLoadTotalsDisplay(){
+      var rows=loadsBody.children;
+      for(var i=0;i<rows.length;i++){
+        var row=state.loads[i]; var totalW=row.qty*row.watts; var wh=totalW*row.hours;
+        rows[i]._totalWCell.textContent=fmt(totalW,0);
+        rows[i]._whCell.textContent=fmt(wh,0);
+      }
+      document.getElementById('og_loadCount').textContent = state.loads.length + ' items';
+    }
+    document.getElementById('og_addLoadBtn').addEventListener('click', function(){
+      state.loads.push({name:'New load', qty:1, watts:0, hours:0}); renderLoads(); recalc();
+    });
+
+    function recalc(){
+      updateLoadTotalsDisplay();
+      var totalWatt=0, totalWh=0;
+      state.loads.forEach(function(row){ var w=row.qty*row.watts; totalWatt+=w; totalWh+=w*row.hours; });
+      var P=state.params;
+
+      var DCAh = P.Vsys ? (totalWh/P.Vsys) : NaN;
+      var AhTotal = DCAh*P.errorMargin;
+      var Itotal = P.sunHours ? (AhTotal/P.sunHours) : NaN;
+      var battCapacityAh = (P.DoD&&P.etaNet) ? ((P.autonomyDays*totalWh)/(P.DoD*P.etaNet)) : NaN;
+
+      var pvArea = (P.Gin&&P.etaPV&&P.etaOut) ? (totalWh/(P.Gin*P.etaPV*P.etaOut*1000)) : NaN;
+      var noModules = P.Pmax ? ((pvArea*P.PSI*P.etaPV)/P.Pmax) : NaN;
+      var noParallel = (P.Impp&&P.Df) ? (Itotal/(P.Impp*P.Df)) : NaN;
+      var noSeries = P.Vsys ? (P.Vmpp/P.Vsys) : NaN;
+      var ccSize = P.Vsys ? ((totalWatt*P.surgeCurrent)/P.Vsys) : NaN;
+      var invSize = (P.powerFactor&&P.etaIN) ? (totalWatt/(P.powerFactor*P.etaIN)) : NaN;
+      var battSeries = P.Vbatt ? (P.Vsys/P.Vbatt) : NaN;
+      var battParallel = P.AhBatt ? (battCapacityAh/P.AhBatt) : NaN;
+
+      var modulesRounded=Math.max(0,Math.ceil(noModules));
+      var parallelRounded=Math.max(0,Math.ceil(noParallel));
+      var seriesStandard=P.Vmpp?Math.max(1,Math.round(P.Vsys/P.Vmpp)):1;
+      var battSeriesRounded=Math.max(1,Math.round(battSeries));
+      var battParallelRounded=Math.max(0,Math.ceil(battParallel));
+      var arrayKWp=modulesRounded*P.Pmax/1000;
+
+      var energyNeedAutonomy_kWh=(totalWh*P.autonomyDays)/1000;
+      var batteryNameplate_kWh=(battSeriesRounded*P.Vbatt*battParallelRounded*P.AhBatt)/1000;
+      var usableBattery_kWh=batteryNameplate_kWh*P.DoD;
+      var autonomyOK=usableBattery_kWh>=energyNeedAutonomy_kWh;
+
+      var estDailyYield_kWh=arrayKWp*P.sunHours*P.Df*P.etaOut;
+      var dailyDemand_kWh=totalWh/1000;
+      var yieldOK=estDailyYield_kWh>=dailyDemand_kWh;
+
+      document.getElementById('og_totalWatt').textContent=fmt(totalWatt,0)+' W';
+      document.getElementById('og_totalWh').textContent=fmt(totalWh,0)+' Wh/day';
+      document.getElementById('og_oDCAh').textContent=fmt(DCAh,1)+' Ah';
+      document.getElementById('og_oAhTotal').textContent=fmt(AhTotal,1)+' Ah';
+      document.getElementById('og_oItotal').textContent=fmt(Itotal,2)+' A';
+      document.getElementById('og_oBattCap').textContent=fmt(battCapacityAh,1)+' Ah';
+      document.getElementById('og_oArea').textContent=fmt(pvArea,2)+' m²';
+      document.getElementById('og_oModules').textContent=fmt(noModules,2)+'  (round up: '+modulesRounded+')';
+      document.getElementById('og_oParallel').textContent=fmt(noParallel,2)+'  (round up: '+parallelRounded+')';
+      document.getElementById('og_oSeries').textContent=fmt(noSeries,3);
+      document.getElementById('og_oCC').textContent=fmt(ccSize,1)+' A';
+      document.getElementById('og_oInv').textContent=fmt(invSize,0)+' VA';
+      document.getElementById('og_oBattSeries').textContent=fmt(battSeries,2)+'  (round: '+battSeriesRounded+')';
+      document.getElementById('og_oBattParallel').textContent=fmt(battParallel,2)+'  (round up: '+battParallelRounded+')';
+
+      document.getElementById('og_seriesNote').innerHTML =
+        '<strong>Note on series count.</strong> The worksheet formula above gives Vmpp ÷ system voltage ('+fmt(noSeries,3)+'). The conventional check — modules in series so combined Vmpp reaches system voltage — is system voltage ÷ Vmpp ≈ <strong>'+seriesStandard+'</strong>. Use the standard check for actual string wiring.';
+
+      document.getElementById('og_hTotalWatt').innerHTML=fmt(totalWatt,0)+' <small>W</small>';
+      document.getElementById('og_hTotalWh').innerHTML=fmt(totalWh/1000,2)+' <small>kWh/day</small>';
+      document.getElementById('og_hArray').innerHTML=fmt(arrayKWp,2)+' <small>kWp · '+modulesRounded+' modules</small>';
+      document.getElementById('og_hString').innerHTML=seriesStandard+' <small>series × '+parallelRounded+' parallel</small>';
+      document.getElementById('og_hBattery').innerHTML=fmt(batteryNameplate_kWh,2)+' <small>kWh · '+battSeriesRounded+'S'+battParallelRounded+'P</small>';
+      document.getElementById('og_hInvCtrl').innerHTML=fmt(invSize,0)+' <small>VA · '+fmt(ccSize,1)+' A ctrl.</small>';
+
+      var elA=document.getElementById('og_checkAutonomy');
+      elA.textContent=(autonomyOK?'Adequate':'Undersized')+' — '+fmt(usableBattery_kWh,2)+' / '+fmt(energyNeedAutonomy_kWh,2)+' kWh';
+      elA.className='check-status '+(autonomyOK?'good':'bad');
+      var elY=document.getElementById('og_checkYield');
+      elY.textContent=(yieldOK?'Adequate':'Undersized')+' — '+fmt(estDailyYield_kWh,2)+' / '+fmt(dailyDemand_kWh,2)+' kWh/day';
+      elY.className='check-status '+(yieldOK?'good':'bad');
+
+      // backup runtime quick calc
+      var backupLoad=num('og_backupLoad'); var backupEff=num('og_backupEff');
+      var runtimeHrs = backupLoad>0 ? (batteryNameplate_kWh*1000*P.DoD*backupEff)/backupLoad : NaN;
+      document.getElementById('og_backupRuntime').textContent = fmt(runtimeHrs,1)+' hrs (≈ '+fmt(runtimeHrs/24,2)+' days)';
+
+      flashHero('og_heroCard');
+      saveState();
+    }
+
+    document.getElementById('og_backupLoad').addEventListener('input', recalc);
+    document.getElementById('og_backupEff').addEventListener('input', recalc);
+
+    loadState();
+    renderLoads();
+    renderParamGroup(document.getElementById('og_sysParams'), SYS_PARAMS, state.params, recalc);
+    renderParamGroup(document.getElementById('og_moduleParams'), MODULE_PARAMS, state.params, recalc);
+    renderParamGroup(document.getElementById('og_batteryParams'), BATTERY_PARAMS, state.params, recalc);
+    recalc();
+
+    document.getElementById('og_printBtn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('og_resetBtn').addEventListener('click', function(){
+      if(!confirm('Reset all Off-Grid inputs to default values?')) return;
+      state.loads=DEFAULT_LOADS.map(function(l){return Object.assign({},l);});
+      state.params={};
+      SYS_PARAMS.concat(MODULE_PARAMS).concat(BATTERY_PARAMS).forEach(function(p){ state.params[p.id]=p.def; });
+      renderLoads();
+      renderParamGroup(document.getElementById('og_sysParams'), SYS_PARAMS, state.params, recalc);
+      renderParamGroup(document.getElementById('og_moduleParams'), MODULE_PARAMS, state.params, recalc);
+      renderParamGroup(document.getElementById('og_batteryParams'), BATTERY_PARAMS, state.params, recalc);
+      recalc();
+    });
+  })();
+
+  /* ============================================================ */
+  /* TAB 02 — GRID-TIED SIZING                                     */
+  /* ============================================================ */
+  (function(){
+    var PARAMS=[
+      {id:'sunHours', label:'Avg. Sun Hours', unit:'hrs', def:5, hint:'Peak sun hours/day for the site'},
+      {id:'PR', label:'Performance Ratio', unit:'ratio', def:0.78, hint:'Typical grid-tied PR: 0.75–0.82'},
+      {id:'Pmax', label:'Module Power', unit:'W', def:450, hint:'Rated module wattage'},
+      {id:'dcAcRatio', label:'Target DC:AC Ratio', unit:'ratio', def:1.2, hint:'Typical 1.1–1.3'},
+      {id:'invUnitKw', label:'Inverter Unit Rating', unit:'kW AC', def:5, hint:'AC rating of a single inverter unit'}
+    ];
+    var state={ params:{} };
+    PARAMS.forEach(function(p){ state.params[p.id]=p.def; });
+    var STORAGE_KEY='pvcalc_ongrid_v1';
+    function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); if(raw){ var parsed=JSON.parse(raw); if(parsed.params){ state=parsed; } } }catch(e){} }
+    function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+    function getBasis(){ var r=document.querySelectorAll('input[name="og2_basis"]'); for(var i=0;i<r.length;i++){ if(r[i].checked) return r[i].value; } return 'consumption'; }
+
+    function recalc(){
+      var P=state.params;
+      var basis=getBasis();
+      var monthly=num('og2_monthly');
+      var targetKwp=num('og2_targetKwp');
+
+      var dailyTarget_kWh, requiredKwp;
+      if(basis==='consumption'){
+        dailyTarget_kWh = monthly/30;
+        requiredKwp = (P.sunHours&&P.PR) ? dailyTarget_kWh/(P.sunHours*P.PR) : NaN;
+      } else {
+        requiredKwp = targetKwp;
+        dailyTarget_kWh = requiredKwp*P.sunHours*P.PR;
+      }
+
+      var noModules = P.Pmax ? Math.max(0,Math.ceil(requiredKwp*1000/P.Pmax)) : 0;
+      var actualKwp = noModules*P.Pmax/1000;
+      var recInvAC = P.dcAcRatio ? actualKwp/P.dcAcRatio : NaN;
+      var noInvUnits = P.invUnitKw ? Math.max(1,Math.ceil(recInvAC/P.invUnitKw)) : 1;
+      var actualInvAC = noInvUnits*P.invUnitKw;
+      var actualRatio = actualInvAC ? actualKwp/actualInvAC : NaN;
+
+      var annualGen = actualKwp*P.sunHours*P.PR*365;
+      var specificYield = P.sunHours*P.PR*365;
+      var coverage = (basis==='consumption'&&monthly>0) ? (annualGen/(monthly*12))*100 : NaN;
+
+      document.getElementById('og2_oDailyTarget').textContent=fmt(dailyTarget_kWh,2)+' kWh/day';
+      document.getElementById('og2_oReqKwp').textContent=fmt(requiredKwp,2)+' kWp';
+      document.getElementById('og2_oModules').textContent=noModules;
+      document.getElementById('og2_oActualKwp').textContent=fmt(actualKwp,2)+' kWp';
+      document.getElementById('og2_oInvAC').textContent=fmt(recInvAC,2)+' kW AC';
+      document.getElementById('og2_oInvUnits').textContent=noInvUnits+' × '+fmt(P.invUnitKw,1)+' kW = '+fmt(actualInvAC,1)+' kW AC';
+      document.getElementById('og2_oAnnualGen').textContent=fmt(annualGen,0)+' kWh/yr';
+
+      document.getElementById('og2_hArray').innerHTML=fmt(actualKwp,2)+' <small>kWp · '+noModules+' modules</small>';
+      document.getElementById('og2_hInverter').innerHTML=fmt(actualInvAC,1)+' <small>kW AC · '+noInvUnits+' unit(s)</small>';
+      document.getElementById('og2_hGen').innerHTML=fmt(annualGen,0)+' <small>kWh/yr</small>';
+      document.getElementById('og2_hYield').innerHTML=fmt(specificYield,0)+' <small>kWh/kWp/yr</small>';
+      document.getElementById('og2_hRatio').innerHTML=fmt(actualRatio,2)+' <small>: 1</small>';
+      document.getElementById('og2_hCoverage').innerHTML=isFinite(coverage)?(fmt(coverage,0)+' <small>% of billed use</small>'):'—';
+
+      flashHero('og2_heroCard');
+      saveState();
+    }
+
+    loadState();
+    renderParamGroup(document.getElementById('og2_params'), PARAMS, state.params, recalc);
+    document.getElementById('og2_monthly').addEventListener('input', recalc);
+    document.getElementById('og2_targetKwp').addEventListener('input', recalc);
+    document.querySelectorAll('input[name="og2_basis"]').forEach(function(r){ r.addEventListener('change', recalc); });
+    recalc();
+
+    document.getElementById('og2_printBtn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('og2_resetBtn').addEventListener('click', function(){
+      if(!confirm('Reset Grid-Tied inputs to default values?')) return;
+      state.params={}; PARAMS.forEach(function(p){ state.params[p.id]=p.def; });
+      document.getElementById('og2_monthly').value=400;
+      document.getElementById('og2_targetKwp').value=5;
+      document.querySelector('input[name="og2_basis"][value="consumption"]').checked=true;
+      renderParamGroup(document.getElementById('og2_params'), PARAMS, state.params, recalc);
+      recalc();
+    });
+  })();
+
+  /* ============================================================ */
+  /* TAB 03 — STRING & TEMPERATURE CHECK                           */
+  /* ============================================================ */
+  (function(){
+    var MODULE=[
+      {id:'Voc', label:'Open Circuit Voltage (Voc, STC)', unit:'V', def:49.5},
+      {id:'Vmpp', label:'Max Power Voltage (Vmpp, STC)', unit:'V', def:41.8},
+      {id:'tcVoc', label:'Temp. Coefficient of Voc', unit:'%/°C', def:-0.27},
+      {id:'tcVmpp', label:'Temp. Coefficient of Vmpp', unit:'%/°C', def:-0.35}
+    ];
+    var TEMP=[
+      {id:'Tmin', label:'Min. Ambient Temperature', unit:'°C', def:-10, hint:'Record low for the site'},
+      {id:'Tmax', label:'Max. Cell Temperature', unit:'°C', def:70, hint:'Typical worst-case cell temp under full sun'}
+    ];
+    var STR=[
+      {id:'Ns', label:'Modules in Series (Ns)', unit:'', def:10},
+      {id:'invMaxV', label:'Inverter Max Input Voltage', unit:'V', def:1000},
+      {id:'mpptMin', label:'Inverter MPPT Min Voltage', unit:'V', def:200},
+      {id:'mpptMax', label:'Inverter MPPT Max Voltage', unit:'V', def:850}
+    ];
+    var state={params:{}};
+    MODULE.concat(TEMP).concat(STR).forEach(function(p){ state.params[p.id]=p.def; });
+    var STORAGE_KEY='pvcalc_string_v1';
+    function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); if(raw){ var parsed=JSON.parse(raw); if(parsed.params){ state=parsed; } } }catch(e){} }
+    function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+    function recalc(){
+      var P=state.params;
+      var vocCold = P.Voc*(1+(P.tcVoc/100)*(P.Tmin-25));
+      var vmppHot = P.Vmpp*(1+(P.tcVmpp/100)*(P.Tmax-25));
+      var vmppCold = P.Vmpp*(1+(P.tcVmpp/100)*(P.Tmin-25));
+      var maxStringV = P.Ns*vocCold;
+      var minOpV = P.Ns*vmppHot;
+      var maxOpV = P.Ns*vmppCold;
+      var maxNs = vocCold ? Math.max(1,Math.floor(P.invMaxV/vocCold)) : 0;
+      var minNs = vmppHot ? Math.max(1,Math.ceil(P.mpptMin/vmppHot)) : 0;
+
+      var okMax = maxStringV <= P.invMaxV;
+      var okMin = minOpV >= P.mpptMin;
+      var okMppMax = maxOpV <= P.mpptMax;
+
+      document.getElementById('st_oVocCold').textContent=fmt(vocCold,2)+' V';
+      document.getElementById('st_oVmppHot').textContent=fmt(vmppHot,2)+' V';
+      document.getElementById('st_oVmppCold').textContent=fmt(vmppCold,2)+' V';
+      document.getElementById('st_oMaxStringV').textContent=fmt(maxStringV,1)+' V';
+      document.getElementById('st_oMinOpV').textContent=fmt(minOpV,1)+' V';
+      document.getElementById('st_oMaxOpV').textContent=fmt(maxOpV,1)+' V';
+
+      document.getElementById('st_hMaxV').innerHTML=fmt(maxStringV,0)+' <small>V</small>';
+      document.getElementById('st_hMinV').innerHTML=fmt(minOpV,0)+' <small>V</small>';
+      document.getElementById('st_hMaxNs').innerHTML=maxNs+' <small>modules max</small>';
+      document.getElementById('st_hMinNs').innerHTML=minNs+' <small>modules min</small>';
+
+      var e1=document.getElementById('st_checkMax'); e1.textContent=(okMax?'Pass':'Fail')+' — '+fmt(maxStringV,0)+' / '+fmt(P.invMaxV,0)+' V'; e1.className='check-status '+(okMax?'good':'bad');
+      var e2=document.getElementById('st_checkMin'); e2.textContent=(okMin?'Pass':'Fail')+' — '+fmt(minOpV,0)+' / '+fmt(P.mpptMin,0)+' V'; e2.className='check-status '+(okMin?'good':'bad');
+      var e3=document.getElementById('st_checkMppMax'); e3.textContent=(okMppMax?'Pass':'Fail')+' — '+fmt(maxOpV,0)+' / '+fmt(P.mpptMax,0)+' V'; e3.className='check-status '+(okMppMax?'good':'bad');
+
+      flashHero('st_heroCard');
+      saveState();
+    }
+    loadState();
+    renderParamGroup(document.getElementById('st_moduleParams'), MODULE, state.params, recalc);
+    renderParamGroup(document.getElementById('st_tempParams'), TEMP, state.params, recalc);
+    renderParamGroup(document.getElementById('st_stringParams'), STR, state.params, recalc);
+    recalc();
+
+    document.getElementById('st_printBtn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('st_resetBtn').addEventListener('click', function(){
+      if(!confirm('Reset String & Temp Check inputs to default values?')) return;
+      state.params={};
+      MODULE.concat(TEMP).concat(STR).forEach(function(p){ state.params[p.id]=p.def; });
+      renderParamGroup(document.getElementById('st_moduleParams'), MODULE, state.params, recalc);
+      renderParamGroup(document.getElementById('st_tempParams'), TEMP, state.params, recalc);
+      renderParamGroup(document.getElementById('st_stringParams'), STR, state.params, recalc);
+      recalc();
+    });
+  })();
+
+  /* ============================================================ */
+  /* TAB 04 — CABLE & VOLTAGE DROP                                 */
+  /* ============================================================ */
+  (function(){
+    var STD_SIZES=[1.5,2.5,4,6,10,16,25,35,50,70,95,120,150,185,240];
+    var RHO={cu:0.0175, al:0.0282};
+
+    function recalc(){
+      var type=document.getElementById('cb_type').value;
+      var material=document.getElementById('cb_material').value;
+      var I=num('cb_current'), L=num('cb_length'), V=num('cb_voltage'), vdAllow=num('cb_vdAllow');
+      var rho=RHO[material];
+      var k = (type==='ac3') ? Math.sqrt(3) : 2;
+
+      var reqArea = (vdAllow&&V) ? (k*L*I*rho)/((vdAllow/100)*V) : NaN;
+      var stdSize = STD_SIZES.find(function(s){ return s>=reqArea; }) || STD_SIZES[STD_SIZES.length-1];
+
+      var vdAtStd = (k*L*I*rho)/stdSize;
+      var vdPctAtStd = V ? (vdAtStd/V)*100 : NaN;
+      var lossW = vdAtStd*I;
+
+      document.getElementById('cb_hReqSize').innerHTML=fmt(reqArea,2)+' <small>mm²</small>';
+      document.getElementById('cb_hStdSize').innerHTML=stdSize+' <small>mm²</small>';
+      document.getElementById('cb_hVd').innerHTML=fmt(vdAtStd,2)+' <small>V ('+fmt(vdPctAtStd,2)+'%)</small>';
+      document.getElementById('cb_hLoss').innerHTML=fmt(lossW,1)+' <small>W</small>';
+
+      var tbody=document.getElementById('cb_sizeTable');
+      tbody.innerHTML='';
+      STD_SIZES.forEach(function(size){
+        var vd=(k*L*I*rho)/size;
+        var vdPct=V?(vd/V)*100:NaN;
+        var pass = vdPct<=vdAllow;
+        var tr=document.createElement('tr');
+        tr.className = pass?'pass':'fail';
+        tr.innerHTML = '<td>'+size+'</td><td>'+fmt(vd,2)+'</td><td>'+fmt(vdPct,2)+'</td><td>'+(pass?'PASS':'FAIL')+'</td>';
+        tbody.appendChild(tr);
+      });
+
+      flashHero('cb_heroCard');
+    }
+    ['cb_type','cb_material','cb_current','cb_length','cb_voltage','cb_vdAllow'].forEach(function(id){
+      document.getElementById(id).addEventListener('input', recalc);
+      document.getElementById(id).addEventListener('change', recalc);
+    });
+    recalc();
+
+    document.getElementById('cb_printBtn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('cb_resetBtn').addEventListener('click', function(){
+      if(!confirm('Reset Cable & Voltage Drop inputs to default values?')) return;
+      document.getElementById('cb_type').value='dc';
+      document.getElementById('cb_material').value='cu';
+      document.getElementById('cb_current').value=20;
+      document.getElementById('cb_length').value=30;
+      document.getElementById('cb_voltage').value=24;
+      document.getElementById('cb_vdAllow').value=3;
+      recalc();
+    });
+  })();
+
+  /* ============================================================ */
+  /* TAB 05 — ROW SPACING                                          */
+  /* ============================================================ */
+  (function(){
+    var PARAMS=[
+      {id:'lat', label:'Site Latitude', unit:'°N', def:27.7, hint:'Positive for northern hemisphere'},
+      {id:'decl', label:'Solar Declination (design day)', unit:'°', def:-23.45, hint:'−23.45° = winter solstice (worst case)'},
+      {id:'panelLen', label:'Panel Slant Length', unit:'m', def:2.0, hint:'Top-to-bottom length of tilted row'},
+      {id:'tilt', label:'Tilt Angle', unit:'°', def:30}
+    ];
+    var state={params:{}};
+    PARAMS.forEach(function(p){ state.params[p.id]=p.def; });
+    var STORAGE_KEY='pvcalc_spacing_v1';
+    function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); if(raw){ var parsed=JSON.parse(raw); if(parsed.params){ state=parsed; } } }catch(e){} }
+    function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+    function recalc(){
+      var P=state.params;
+      var alt = 90 - Math.abs(P.lat - P.decl);
+      var warn = '';
+      if(alt<=0){ warn = '<strong>Sun below horizon</strong> at solar noon for these inputs — check latitude/declination.'; alt = Math.max(alt, 0.01); }
+
+      var tiltRad=P.tilt*Math.PI/180, altRad=alt*Math.PI/180;
+      var H=P.panelLen*Math.sin(tiltRad);
+      var Wg=P.panelLen*Math.cos(tiltRad);
+      var shadow=H/Math.tan(altRad);
+      var pitch=Wg+shadow;
+      var gcr=pitch?Wg/pitch:NaN;
+
+      document.getElementById('sp_oH').textContent=fmt(H,3)+' m';
+      document.getElementById('sp_oWg').textContent=fmt(Wg,3)+' m';
+      document.getElementById('sp_oShadow').textContent=fmt(shadow,3)+' m';
+      document.getElementById('sp_oPitch').textContent=fmt(pitch,3)+' m';
+      document.getElementById('sp_oGcr').textContent=fmt(gcr,3);
+
+      document.getElementById('sp_hAlt').innerHTML=fmt(alt,1)+' <small>°</small>';
+      document.getElementById('sp_hPitch').innerHTML=fmt(pitch,2)+' <small>m</small>';
+      document.getElementById('sp_hGcr').innerHTML=fmt(gcr,2);
+      document.getElementById('sp_hShadow').innerHTML=fmt(shadow,2)+' <small>m</small>';
+
+      document.getElementById('sp_warnNote').innerHTML = warn;
+
+      flashHero('sp_heroCard');
+      saveState();
+    }
+    loadState();
+    renderParamGroup(document.getElementById('sp_params'), PARAMS, state.params, recalc);
+    recalc();
+
+    document.getElementById('sp_printBtn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('sp_resetBtn').addEventListener('click', function(){
+      if(!confirm('Reset Row Spacing inputs to default values?')) return;
+      state.params={}; PARAMS.forEach(function(p){ state.params[p.id]=p.def; });
+      renderParamGroup(document.getElementById('sp_params'), PARAMS, state.params, recalc);
+      recalc();
+    });
+  })();
+
+  /* ============================================================ */
+  /* TAB 06 — FINANCIAL & CO2                                      */
+  /* ============================================================ */
+  (function(){
+    var PARAMS=[
+      {id:'kwp', label:'System Size', unit:'kWp', def:5},
+      {id:'specificYield', label:'Specific Yield', unit:'kWh/kWp/yr', def:1400, hint:'Annual generation per kWp installed'},
+      {id:'costPerWp', label:'Installed Cost', unit:'per Wp', def:1.0, hint:'In your local currency per watt'},
+      {id:'tariff', label:'Electricity Tariff', unit:'per kWh', def:0.12, hint:'Net-metering or avoided-cost rate'},
+      {id:'omPct', label:'Annual O&M Cost', unit:'% of CAPEX', def:1},
+      {id:'degradation', label:'Annual Degradation', unit:'%/yr', def:0.5},
+      {id:'emissionFactor', label:'Grid Emission Factor', unit:'kgCO₂/kWh', def:0.003, hint:'Default: Nepal IEA lifecycle factor'},
+      {id:'period', label:'Analysis Period', unit:'years', def:25}
+    ];
+    var state={params:{}};
+    PARAMS.forEach(function(p){ state.params[p.id]=p.def; });
+    var STORAGE_KEY='pvcalc_financial_v1';
+    function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); if(raw){ var parsed=JSON.parse(raw); if(parsed.params){ state=parsed; } } }catch(e){} }
+    function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+    function recalc(){
+      var P=state.params;
+      var capex = P.kwp*1000*P.costPerWp;
+      var omCost = capex*(P.omPct/100);
+      var gen1 = P.kwp*P.specificYield;
+      var rev1 = gen1*P.tariff - omCost;
+      var simplePayback = rev1>0 ? capex/rev1 : NaN;
+
+      var period=Math.max(1,Math.round(P.period));
+      var cum = -capex;
+      var lifetimeGen=0;
+      var paybackYear=null;
+      var rows=[];
+      for(var n=0;n<period;n++){
+        var genYear = gen1*Math.pow(1-P.degradation/100, n);
+        var revYear = genYear*P.tariff - omCost;
+        cum += revYear;
+        lifetimeGen += genYear;
+        if(paybackYear===null && cum>=0) paybackYear = n+1;
+        rows.push({year:n+1, gen:genYear, cum:cum});
+      }
+      var lifetimeCo2Tons = lifetimeGen*P.emissionFactor/1000;
+      var co2Yr1Kg = gen1*P.emissionFactor;
+
+      document.getElementById('fi_hCapex').innerHTML=fmt(capex,0);
+      document.getElementById('fi_hGen1').innerHTML=fmt(gen1,0)+' <small>kWh</small>';
+      document.getElementById('fi_hPayback').innerHTML=(paybackYear||fmt(simplePayback,1))+' <small>yrs</small>';
+      document.getElementById('fi_hSavings').innerHTML=fmt(cum,0);
+      document.getElementById('fi_hCo2').innerHTML=fmt(lifetimeCo2Tons,2)+' <small>tCO₂</small>';
+      document.getElementById('fi_hCo2Yr1').innerHTML=fmt(co2Yr1Kg,1)+' <small>kg</small>';
+
+      var tbody=document.getElementById('fi_cashTable');
+      tbody.innerHTML='';
+      var showYears = [1,5,10,15,20,25].filter(function(y){ return y<=period; });
+      if(showYears.indexOf(period)===-1) showYears.push(period);
+      showYears.forEach(function(y){
+        var r=rows[y-1];
+        var tr=document.createElement('tr');
+        tr.className = r.cum>=0 ? 'pass':'fail';
+        tr.innerHTML='<td>Year '+y+'</td><td>'+fmt(r.gen,0)+'</td><td>'+fmt(r.cum,0)+'</td>';
+        tbody.appendChild(tr);
+      });
+
+      flashHero('fi_heroCard');
+      saveState();
+    }
+    loadState();
+    renderParamGroup(document.getElementById('fi_params'), PARAMS, state.params, recalc);
+    recalc();
+
+    document.getElementById('fi_printBtn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('fi_resetBtn').addEventListener('click', function(){
+      if(!confirm('Reset Financial & CO2 inputs to default values?')) return;
+      state.params={}; PARAMS.forEach(function(p){ state.params[p.id]=p.def; });
+      renderParamGroup(document.getElementById('fi_params'), PARAMS, state.params, recalc);
+      recalc();
+    });
+  })();
+
+})();
+</script>
+
+</body>
+</html>
