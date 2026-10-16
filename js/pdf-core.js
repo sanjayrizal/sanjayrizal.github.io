@@ -46,5 +46,33 @@ async function exportPdf(L,bytes,objs,base){
     } }
   return doc.save();
 }
-return {Editor,clamp,sniff,hexToRgb,wrapLines,exportPdf};
+/* ---- Plain-background remover (pure pixel maths, no DOM) ----
+   rgba: Uint8ClampedArray/Uint8Array of w*h*4. Modifies and returns it.
+   opt: {r,g,b, tol (0-200), feather (0-100), contiguous (bool)}
+   Pixels within `tol` colour distance of the background become transparent; pixels between
+   tol and tol+feather fade in. contiguous=true only removes background reachable from the image border. */
+function removeBackground(rgba,w,h,opt){
+  const tol=Math.max(0,+opt.tol||0), fe=Math.max(0,+opt.feather||0), lim=tol+fe, n=w*h, R=opt.r, G=opt.g, Bc=opt.b;
+  const dist=new Float32Array(n);
+  for(let i=0;i<n;i++){ const j=i*4, dr=rgba[j]-R, dg=rgba[j+1]-G, db=rgba[j+2]-Bc; dist[i]=Math.sqrt(dr*dr+dg*dg+db*db); }
+  let region=null;
+  if(opt.contiguous){
+    region=new Uint8Array(n); const q=new Int32Array(n); let qh=0,qt=0;
+    const push=i=>{ if(!region[i]&&dist[i]<=lim){ region[i]=1; q[qt++]=i; } };
+    for(let x=0;x<w;x++){ push(x); push((h-1)*w+x); } for(let y=0;y<h;y++){ push(y*w); push(y*w+w-1); }
+    while(qh<qt){ const i=q[qh++], x=i%w, y=(i-x)/w; if(x>0) push(i-1); if(x<w-1) push(i+1); if(y>0) push(i-w); if(y<h-1) push(i+w); }
+  }
+  for(let i=0;i<n;i++){ if(region&&!region[i]) continue; const d=dist[i]; let a;
+    if(d<=tol) a=0; else if(d>=lim) continue; else a=(d-tol)/fe;   // fe>0 here because tol<d<lim
+    const j=i*4+3; rgba[j]=Math.round(rgba[j]*a); }
+  return rgba;
+}
+/* Guess the background colour: median of the four corner patches (each averaged). */
+function guessBackground(rgba,w,h){
+  const k=Math.max(1,Math.min(6,Math.floor(Math.min(w,h)/4))), cs=[[0,0],[w-k,0],[0,h-k],[w-k,h-k]], m=[[],[],[]];
+  cs.forEach(([cx,cy])=>{ const s=[0,0,0]; for(let y=cy;y<cy+k;y++) for(let x=cx;x<cx+k;x++){ const j=(y*w+x)*4; s[0]+=rgba[j]; s[1]+=rgba[j+1]; s[2]+=rgba[j+2]; } for(let c=0;c<3;c++) m[c].push(s[c]/(k*k)); });
+  const med=a=>{ a.sort((p,q)=>p-q); return (a[1]+a[2])/2; };
+  return {r:Math.round(med(m[0])),g:Math.round(med(m[1])),b:Math.round(med(m[2]))};
+}
+return {Editor,clamp,sniff,hexToRgb,wrapLines,exportPdf,removeBackground,guessBackground};
 });
