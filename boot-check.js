@@ -1,0 +1,1 @@
+window.addEventListener('load',function(){setTimeout(function(){if(!window.__pdfEditorReady){var s=document.getElementById('status');s.className='err';s.textContent='The editor did not load. Check that the js/ and vendor/ folders are uploaded next to pdf-editor.html (not loose in the root), then hard-refresh with Ctrl+Shift+R.';}},2000);});
