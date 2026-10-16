@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Lab — Sanjay Rizal</title>
+<meta name="description" content="Interactive electrical engineering tools by Sanjay Rizal: solar PV sizing, single/three-phase power, load energy analysis and a DC circuit solver.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none';">
+<meta name="theme-color" content="#0B0D10">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B0D10;--card:#15181E;--line:rgba(237,234,227,.14);--ink:#EDEAE3;--dim:#A8A69F;--copper:#FF8A3D;--cyan:#3DDFFF;--bad:#FF6B6B;
+--d:'Space Grotesk',sans-serif;--b:'Inter',sans-serif;--m:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:400 1rem/1.55 var(--b)}
+a{color:var(--copper)} :focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+header{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:1.2rem clamp(1rem,4vw,2.5rem);border-bottom:1px solid var(--line)}
+header a{font:500 .8rem var(--m);text-decoration:none;padding:.6rem .2rem}
+main{max-width:1180px;margin:0 auto;padding:2.5rem clamp(1rem,4vw,2.5rem) 4rem}
+h1{font:700 clamp(2rem,5vw,3.2rem)/1.1 var(--d);margin-bottom:.8rem}
+.lead{color:var(--dim);max-width:62ch;margin-bottom:2.5rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:1.5rem}
+.tool{background:var(--card);border:1px solid var(--line);padding:1.5rem;min-width:0}
+.tool h2{font:700 1.3rem var(--d);margin-bottom:.3rem}
+.tool>p{color:var(--dim);font-size:.9rem;margin-bottom:1rem}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem}
+label{display:block;font:500 .78rem var(--m);color:var(--dim)}
+input,select{width:100%;margin-top:.3rem;min-height:44px;background:#0F1217;color:var(--ink);border:1px solid var(--line);padding:.5rem .6rem;font:500 .95rem var(--m)}
+input[aria-invalid=true]{border-color:var(--bad)}
+.btns{display:flex;gap:.6rem;margin:1rem 0;flex-wrap:wrap}
+button{min-height:44px;padding:.5rem 1rem;background:none;color:var(--copper);border:1px solid rgba(255,138,61,.45);font:500 .8rem var(--m);cursor:pointer}
+button:hover{background:rgba(255,138,61,.14)}
+.out{border-top:1px solid var(--line);padding-top:1rem;min-height:3rem}
+.err{color:var(--bad);font-size:.9rem}
+dl{display:grid;grid-template-columns:1fr auto;gap:.35rem 1rem}
+dt{color:var(--dim)} dd{font:500 .95rem var(--m);text-align:right}
+.note{color:var(--dim);font-size:.82rem;margin-top:.8rem}
+.formula{font:400 .8rem var(--m);color:var(--cyan);margin-top:.8rem;overflow-wrap:anywhere}
+.bar{display:grid;grid-template-columns:7rem 1fr 4.5rem;gap:.6rem;align-items:center;font:400 .8rem var(--m);margin:.3rem 0}
+.bar i{display:block;height:10px;background:var(--copper);min-width:2px}
+.bar span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:.5rem;margin-bottom:.5rem;align-items:end}
+@media(max-width:560px){.row{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:no-preference){button{transition:background .2s}}
+</style></head><body>
+<header><a href="index.html">← Sanjay Rizal</a><a href="calculator.html">Solar calculator suite</a></header>
+<main>
+<h1>Engineering Lab</h1>
+<p class="lead">Four small tools for preliminary electrical calculations. All maths runs in your browser; nothing you type is sent anywhere. These are learning and first-pass estimates, not design sign-off.</p>
+<div class="grid">
+
+<section class="tool" aria-labelledby="t1"><h2 id="t1">Solar PV sizing</h2>
+<p>Preliminary grid-connected sizing from consumption, solar resource and available area.</p>
+<div class="f" id="pvF"></div>
+<div class="btns"><button type="button" data-reset="pv">Reset to example</button></div>
+<div class="out" id="pvO" aria-live="polite"></div></section>
+
+<section class="tool" aria-labelledby="t2"><h2 id="t2">Single &amp; three-phase power</h2>
+<p>Real, apparent and reactive power from voltage, current and power factor.</p>
+<div class="f" id="pwF"></div>
+<div class="btns"><button type="button" data-reset="pw">Reset to example</button></div>
+<div class="out" id="pwO" aria-live="polite"></div></section>
+
+<section class="tool" aria-labelledby="t3"><h2 id="t3">Load energy analyzer</h2>
+<p>Estimate daily and monthly energy and cost from a list of loads. Example values only.</p>
+<div id="enRows"></div>
+<div class="f" id="enF"></div>
+<div class="btns"><button type="button" id="enAdd">Add load</button><button type="button" data-reset="en">Reset to example</button></div>
+<div class="out" id="enO" aria-live="polite"></div></section>
+
+<section class="tool" aria-labelledby="t4"><h2 id="t4">DC resistor circuit</h2>
+<p>A DC source with resistors purely in series or purely in parallel. This is not a general (SPICE-style) solver.</p>
+<div class="f" id="dcF"></div>
+<div class="btns"><button type="button" data-reset="dc">Reset to example</button></div>
+<div class="out" id="dcO" aria-live="polite"></div></section>
+
+</div></main>
+<script src="js/calc.js"></script>
+<script src="js/lab.js"></script>
+</body></html>
