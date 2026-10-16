@@ -1,6 +1,7 @@
 import * as pdfjs from '../vendor/pdf.min.mjs';
 pdfjs.GlobalWorkerOptions.workerSrc=new URL('../vendor/pdf.worker.min.mjs',import.meta.url).href;
 const PC=window.PdfCore, $=s=>document.querySelector(s), MAXPDF=50<<20, MAXIMG=10<<20;
+const origs=new Map();
 let ed=new PC.Editor(), bytes,name='document.pdf',doc,page=0,zoom=1,pw=0,ph=0,sel=null,tool=null,token=0,task=null,items=[],thumbTok=0,replacing=false,raster=false;
 const ov=$('#ov'),cv=$('#cv'),sheet=$('#sheet'),ws=$('#ws');
 const status=(m,k)=>{ const s=$('#status'); s.textContent=m||''; s.className=k||''; };
@@ -25,7 +26,7 @@ async function openFile(f){
   let rOnly=false; try{ await PDFLib.PDFDocument.load(buf); }catch(e){ console.warn('pdf-lib could not load this PDF',e); rOnly=true; }
   let d; try{ d=await pdfjs.getDocument({data:buf.slice(),standardFontDataUrl:new URL('../vendor/standard_fonts/',import.meta.url).href,cMapUrl:new URL('../vendor/cmaps/',import.meta.url).href,cMapPacked:true}).promise; }
   catch(e){ return status(e&&e.name==='PasswordException'?'This PDF is password-protected. Remove the password first.':'This PDF could not be read. It may be damaged.','err'); }
-  doc&&doc.destroy&&doc.destroy(); doc=d; raster=rOnly; bytes=buf; name=f.name; ed=new PC.Editor(); sel=null; tool=null; page=0;
+  doc&&doc.destroy&&doc.destroy(); doc=d; raster=rOnly; bytes=buf; name=f.name; ed=new PC.Editor(); origs.clear(); sel=null; tool=null; page=0;
   $('#empty').hidden=true; $('#app').hidden=false; bar.hidden=false; $('#fn').textContent=name+' · '+doc.numPages+(doc.numPages===1?' page':' pages');
   buildThumbs(); await showPage(0,true); status(raster?'Opened '+name+'. This PDF is protected or unusual, so the download will be rebuilt from page images (text in it will no longer be selectable).':'Opened '+name+'. Choose “Edit existing text”, “Add text” or “Add image” to start.',raster?'':'ok');
 }
@@ -63,7 +64,7 @@ function setTool(t){ tool=tool===t?null:t; renderOverlay(); btns(); if(tool==='e
 function panel(){ const o=sel&&ed.get(sel), p=$('#panel');
   if(!o){ p.innerHTML='<h2>Formatting</h2><p>Select text or an image on the page to change it. Drag to move, use the round handle to resize, double-click text to edit. Delete removes the selected item.</p>'; return; }
   if(o.type==='rect') p.innerHTML=`<h2>Box</h2><p>Covers what is under it. The covered content is still inside the file.</p><label>Color<input id="pCol" type="color" value="${o.color}"></label><label>Opacity (%)<input id="pOp" type="number" min="5" max="100" step="5" value="${Math.round((o.opacity==null?1:o.opacity)*100)}"></label><button id="pDel">Delete</button>`;
-  else if(o.type==='image'){ p.innerHTML='<h2>Image</h2><p>Resizing keeps the aspect ratio.</p><button id="pRep">Replace image</button><button id="pDel">Delete</button>'; }
+  else if(o.type==='image'){ p.innerHTML='<h2>Image</h2><p>Resizing keeps the aspect ratio.</p><button id="pBg" class="pri">Remove background</button><p>Works for a plain background such as a signature on paper, a logo or a stamp. It cannot cut a person out of a busy photo.</p>'+(origs.has(o.id)?'<button id="pRestore">Restore original</button>':'')+'<button id="pRep">Replace image</button><button id="pDel">Delete</button>'; }
   else p.innerHTML=`<h2>Text</h2><label>Size (pt)<input id="pSize" type="number" min="4" max="200" step="1" value="${o.size}"></label><label>Color<input id="pCol" type="color" value="${o.color}"></label>
    <div class="row2"><button id="pB" aria-pressed="${!!o.bold}"><b>Bold</b></button><button id="pI" aria-pressed="${!!o.italic}"><i>Italic</i></button></div>
    <label>Alignment<select id="pAl">${['left','center','right'].map(a=>`<option${o.align===a?' selected':''}>${a}</option>`).join('')}</select></label><button id="pDel">Delete</button>`; }
@@ -108,10 +109,25 @@ async function readImage(f){ if(f.size>MAXIMG) throw new Error('That image is la
   return {dataUrl,mime:k==='png'?'image/png':'image/jpeg',ratio:dim[1]/dim[0]}; }
 $('#imgIn').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f||!doc) return;
   try{ const im=await readImage(f);
-    if(replacing&&sel&&ed.get(sel)){ replacing=false; apply(o=>{ o.dataUrl=im.dataUrl; o.mime=im.mime; o.h=o.w*im.ratio; }); renderOverlay(); }
+    if(replacing&&sel&&ed.get(sel)){ replacing=false; origs.delete(sel); apply(o=>{ o.dataUrl=im.dataUrl; o.mime=im.mime; o.h=o.w*im.ratio; }); renderOverlay(); }
     else { const w=Math.min(200,pw*.4); const o=ed.add({type:'image',page,x:(pw-w)/2,y:Math.max(0,ph/2-w*im.ratio/2),w,h:w*im.ratio,dataUrl:im.dataUrl,mime:im.mime}); renderOverlay(); select(o.id); }
     status('Image added. Drag it into place.','ok'); }catch(err){ replacing=false; status(err.message,'err'); } };
 
+
+const loadImg=u=>new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('The image could not be read.')); im.src=u; });
+async function removeBg(){ const o=sel&&ed.get(sel); if(!o||o.type!=='image') return;
+  try{ const src=origs.get(o.id)||{dataUrl:o.dataUrl,mime:o.mime}, im=await loadImg(src.dataUrl), k=Math.min(1,2400/Math.max(im.naturalWidth,im.naturalHeight)),
+      w=Math.max(1,Math.round(im.naturalWidth*k)), h=Math.max(1,Math.round(im.naturalHeight*k)), c=document.createElement('canvas'); c.width=w; c.height=h;
+    const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(im,0,0,w,h); const d=x.getImageData(0,0,w,h), bg=PC.guessBackground(d.data,w,h);
+    PC.removeBackground(d.data,w,h,{r:bg.r,g:bg.g,b:bg.b,tol:45,feather:25,contiguous:false});
+    let clear=0; for(let i=3;i<d.data.length;i+=4) if(d.data[i]<10) clear++; const frac=clear/(w*h);
+    if(frac<.005) return status('No plain background was found to remove. This tool only works when the background is one even colour.','err');
+    if(frac>.998) return status('That would erase almost the whole image, so nothing was changed. The background colour is probably too close to the subject.','err');
+    x.putImageData(d,0,0); const url=c.toDataURL('image/png'), keep=src;
+    apply(t=>{ t.dataUrl=url; t.mime='image/png'; }); if(!origs.has(o.id)) origs.set(o.id,keep); renderOverlay(); panel();
+    status('Background removed ('+Math.round(frac*100)+'% of the image made transparent). Not right? Press Undo or "Restore original".','ok');
+  }catch(e){ status('Could not remove the background: '+(e&&e.message||'unknown error'),'err'); } }
+function restoreBg(){ const o=sel&&ed.get(sel), g=o&&origs.get(o.id); if(!g) return; apply(t=>{ t.dataUrl=g.dataUrl; t.mime=g.mime; }); origs.delete(o.id); renderOverlay(); panel(); status('Original image restored.','ok'); }
 function undoRedo(r){ if(!(r?ed.redoStep():ed.undoStep())) return; sel=ed.get(sel)?sel:null; renderOverlay(); panel(); btns(); }
 const del=()=>{ if(sel&&ed.get(sel)){ ed.remove(sel); sel=null; renderOverlay(); panel(); btns(); } };
 async function rasterDoc(){ const out=await PDFLib.PDFDocument.create();
@@ -130,7 +146,7 @@ document.addEventListener('click',e=>{ const t=e.target.closest('button'); if(!t
   ({bOpen:()=>$('#fileIn').click(),bPrev:()=>showPage(page-1),bNext:()=>showPage(page+1),zIn:()=>{zoom=Math.min(4,zoom*1.25);showPage(page);},zOut:()=>{zoom=Math.max(.25,zoom/1.25);showPage(page);},zFit:()=>showPage(page,true),
    bEdit:()=>setTool('edit'),bText:()=>setTool('text'),bWhite:()=>setTool('white'),bHl:()=>setTool('hl'),bImg:()=>{replacing=false;$('#imgIn').click();},bUndo:()=>undoRedo(false),bRedo:()=>undoRedo(true),
    bReset:()=>{ if(confirm('Discard all added text and images? You can still undo this.')){ ed.reset(); sel=null; renderOverlay(); panel(); btns(); } },bDl:download,
-   pDel:del,pRep:()=>{replacing=true;$('#imgIn').click();},pB:()=>apply(o=>o.bold=!o.bold),pI:()=>apply(o=>o.italic=!o.italic)}[t.id]||(()=>{}))(); });
+   pDel:del,pBg:removeBg,pRestore:restoreBg,pRep:()=>{replacing=true;$('#imgIn').click();},pB:()=>apply(o=>o.bold=!o.bold),pI:()=>apply(o=>o.italic=!o.italic)}[t.id]||(()=>{}))(); });
 document.addEventListener('change',e=>{ const t=e.target;
   if(t.id==='fileIn'){ openFile(t.files[0]); t.value=''; }
   else if(t.id==='pSize'){ const v=+t.value; if(v>=4&&v<=200) apply(o=>o.size=v); }
