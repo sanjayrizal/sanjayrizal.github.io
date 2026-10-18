@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free PDF Tools: Images to PDF, PDF to Images, Rearrange, Crop, Merge — Sanjay Rizal</title>
+<meta name="description" content="Free PDF tools that run in your browser: turn images into a PDF, export PDF pages as images in a ZIP, rearrange pages, crop and merge PDFs. Files are never uploaded.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none';">
+<meta name="theme-color" content="#0B0D10">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B0D10;--card:#15181E;--line:rgba(237,234,227,.16);--ink:#EDEAE3;--dim:#A8A69F;--copper:#FF8A3D;--cyan:#3DDFFF;--bad:#FF6B6B;--ok:#6FD39A;--d:'Space Grotesk',sans-serif;--b:'Inter',sans-serif;--m:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0}[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:400 1rem/1.5 var(--b);min-height:100vh}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+header.top{display:flex;gap:1.2rem;flex-wrap:wrap;padding:.4rem clamp(1rem,3vw,2rem);border-bottom:1px solid var(--line)}
+header.top a{font:500 .8rem var(--m);color:var(--copper);text-decoration:none;padding:.7rem .2rem}
+.intro{padding:1.5rem clamp(1rem,3vw,2rem) 1rem}
+h1{font:700 clamp(1.7rem,4vw,2.4rem)/1.15 var(--d)}
+.intro p{color:var(--dim);max-width:70ch;margin-top:.4rem}
+[role=tablist]{display:flex;flex-wrap:wrap;gap:.4rem;padding:0 clamp(1rem,3vw,2rem);margin-bottom:.8rem}
+[role=tab][aria-selected=true]{border-color:var(--copper);color:var(--copper);background:var(--card)}
+#status{margin:0 clamp(1rem,3vw,2rem) .8rem;min-height:1.5rem;font-size:.9rem;color:var(--dim)}#status.err{color:var(--bad)}#status.ok{color:var(--ok)}
+.btn,button,select,input[type=text],input[type=number]{min-height:44px;padding:.5rem .9rem;background:none;color:var(--ink);border:1px solid var(--line);font:500 .8rem var(--m)}
+select{background:var(--card)}input[type=text]{width:12rem;background:var(--card)}
+button{cursor:pointer}button:hover:not(:disabled){border-color:var(--copper);color:var(--copper)}button:disabled{opacity:.4;cursor:not-allowed}
+button.pri{background:var(--copper);color:#0B0D10;border-color:var(--copper)}button.pri:hover:not(:disabled){background:#ffa066;color:#0B0D10}
+section.panel{margin:0 clamp(1rem,3vw,2rem) 2rem;padding:1.2rem;background:var(--card);border:1px solid var(--line)}
+section.panel h2{font:700 1.2rem var(--d);margin-bottom:.3rem}section.panel>p{color:var(--dim);max-width:75ch;margin-bottom:.9rem;font-size:.92rem}
+.drop{display:flex;flex-direction:column;align-items:center;gap:.4rem;text-align:center;padding:1.6rem 1rem;border:2px dashed var(--line);cursor:pointer;margin-bottom:.9rem}
+.drop.over{border-color:var(--copper)}.drop b{font:700 1rem var(--d)}.drop small{color:var(--dim)}
+.row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.7rem 0}.row label{font:500 .8rem var(--m);color:var(--dim);display:flex;gap:.4rem;align-items:center}
+.list{list-style:none;padding:0;display:grid;gap:.4rem;margin:.6rem 0}
+.list li{display:flex;gap:.6rem;align-items:center;border:1px solid var(--line);padding:.4rem .6rem}
+.list img{width:44px;height:44px;object-fit:cover;background:#fff}.list .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.list small{color:var(--dim);font:400 .75rem var(--m)}
+.list button{min-width:44px;padding:.3rem .5rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.7rem;margin:.8rem 0}
+.card{border:1px solid var(--line);padding:.4rem;background:var(--bg)}.card.drag{opacity:.4}.card.over{border-color:var(--copper)}
+.card .box{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#222}.card img{max-width:100%;max-height:100%;background:#fff;transition:transform .15s}
+.card .lbl{font:400 .75rem var(--m);color:var(--dim);text-align:center;margin:.3rem 0}.card .acts{display:flex;justify-content:center;gap:.2rem;flex-wrap:wrap}.card .acts button{min-width:40px;min-height:40px;padding:.2rem}
+#cropWrap{position:relative;display:inline-block;max-width:100%;touch-action:none;user-select:none;cursor:crosshair;overflow:hidden;background:#fff}#cropWrap canvas{display:block;max-width:100%}
+#cropBox{position:absolute;border:2px solid var(--copper);box-shadow:0 0 0 9999px rgba(0,0,0,.55);pointer-events:none}
+.sl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.6rem;margin:.7rem 0}.sl label{display:grid;gap:.2rem;font:500 .8rem var(--m);color:var(--dim)}.sl input{width:100%}
+.note{font-size:.85rem;color:var(--dim);border-left:3px solid var(--copper);padding:.2rem .7rem;margin:.8rem 0;max-width:75ch}
+</style></head><body>
+<header class="top"><a href="index.html">← Sanjay Rizal</a><a href="pdf-editor.html">Free PDF Editor</a><a href="lab.html">Engineering Lab</a></header>
+<div class="intro"><h1>Free PDF Tools</h1><p>Images to PDF, PDF to images (ZIP), rearrange pages, crop, and merge. Everything runs inside your browser, so your files are never uploaded anywhere.</p></div>
+<div role="tablist" aria-label="PDF tools" id="tabs">
+<button role="tab" id="t-img" aria-controls="p-img" aria-selected="true">Images → PDF</button>
+<button role="tab" id="t-zip" aria-controls="p-zip" aria-selected="false">PDF → Images (ZIP)</button>
+<button role="tab" id="t-arr" aria-controls="p-arr" aria-selected="false">Rearrange pages</button>
+<button role="tab" id="t-crop" aria-controls="p-crop" aria-selected="false">Crop</button>
+<button role="tab" id="t-merge" aria-controls="p-merge" aria-selected="false">Merge PDFs</button></div>
+<div id="status" role="status" aria-live="polite">Loading…</div>
+
+<section class="panel" id="p-img" role="tabpanel" aria-labelledby="t-img">
+<h2>Images → PDF</h2><p>Add several JPG or PNG photos (other image types are converted). Each image becomes one page, in the order shown. Use the arrows to change the order.</p>
+<div class="drop" id="d-img" tabindex="0" role="button"><b>Drop images here or click to choose</b><small>JPG, PNG, WebP, GIF, BMP · you can pick many at once</small></div>
+<input id="in-img" type="file" accept="image/*" multiple hidden>
+<ul class="list" id="l-img"></ul>
+<div class="row"><label>Page size <select id="o-size"><option value="fit">Same as image</option><option value="a4">A4</option><option value="letter">US Letter</option></select></label>
+<button id="b-img" class="pri" disabled>Create PDF</button><button id="b-img-clear" disabled>Clear list</button></div>
+</section>
+
+<section class="panel" id="p-zip" role="tabpanel" aria-labelledby="t-zip" hidden>
+<h2>PDF → Images (ZIP)</h2><p>Turns every page (or the pages you choose) into a picture and puts them all in one ZIP file.</p>
+<div class="drop" id="d-zip" tabindex="0" role="button"><b>Drop a PDF here or click to choose</b><small id="s-zip">No file chosen</small></div>
+<input id="in-zip" type="file" accept="application/pdf,.pdf" hidden>
+<div class="row"><label>Format <select id="o-fmt"><option value="png">PNG (sharp, larger)</option><option value="jpg">JPG (smaller)</option></select></label>
+<label>Quality <select id="o-dpi"><option value="72">Small (72 dpi)</option><option value="150" selected>Normal (150 dpi)</option><option value="200">High (200 dpi)</option><option value="300">Very high (300 dpi)</option></select></label>
+<label>Pages <input type="text" id="o-range" placeholder="all  (or 1-3, 5, 8-)" aria-label="Pages to export"></label></div>
+<div class="row"><button id="b-zip" class="pri" disabled>Create ZIP</button></div>
+</section>
+
+<section class="panel" id="p-arr" role="tabpanel" aria-labelledby="t-arr" hidden>
+<h2>Rearrange pages</h2><p>Drag pages (or use the arrow buttons) to change the order. You can also rotate or delete pages. Then download the new PDF.</p>
+<div class="drop" id="d-arr" tabindex="0" role="button"><b>Drop a PDF here or click to choose</b><small id="s-arr">No file chosen</small></div>
+<input id="in-arr" type="file" accept="application/pdf,.pdf" hidden>
+<div class="row"><button id="b-arr-rev" disabled>Reverse order</button><button id="b-arr-reset" disabled>Reset</button><button id="b-arr" class="pri" disabled>Download new PDF</button></div>
+<div class="grid" id="g-arr"></div>
+</section>
+
+<section class="panel" id="p-crop" role="tabpanel" aria-labelledby="t-crop" hidden>
+<h2>Crop PDF</h2><p>Drag on the page to draw the area you want to keep, or use the four sliders to trim the edges. Then choose whether to crop every page or just this one.</p>
+<div class="drop" id="d-crop" tabindex="0" role="button"><b>Drop a PDF here or click to choose</b><small id="s-crop">No file chosen</small></div>
+<input id="in-crop" type="file" accept="application/pdf,.pdf" hidden>
+<div class="row"><button id="c-prev" disabled aria-label="Previous page">◀</button><span id="c-pg" class="note" style="border:0;margin:0;padding:0">–</span><button id="c-next" disabled aria-label="Next page">▶</button></div>
+<div id="cropWrap" hidden><canvas id="cropCv"></canvas><div id="cropBox" hidden></div></div>
+<div class="sl" id="c-sl" hidden>
+<label>Trim top: <b id="v-t">0</b>%<input type="range" id="r-t" min="0" max="95" value="0"></label>
+<label>Trim bottom: <b id="v-b">0</b>%<input type="range" id="r-b" min="0" max="95" value="0"></label>
+<label>Trim left: <b id="v-l">0</b>%<input type="range" id="r-l" min="0" max="95" value="0"></label>
+<label>Trim right: <b id="v-r">0</b>%<input type="range" id="r-r" min="0" max="95" value="0"></label></div>
+<div class="row"><label>Apply to <select id="o-scope"><option value="all">All pages</option><option value="one">Only this page</option></select></label>
+<button id="c-clear" disabled>Clear crop</button><button id="c-go" class="pri" disabled>Download cropped PDF</button></div>
+<p class="note">Cropping hides the outside area but does not delete it from the file. Do not use crop to hide private information.</p>
+</section>
+
+<section class="panel" id="p-merge" role="tabpanel" aria-labelledby="t-merge" hidden>
+<h2>Merge PDFs</h2><p>Add two or more PDFs, put them in the order you want with the arrows, and download one combined PDF.</p>
+<div class="drop" id="d-merge" tabindex="0" role="button"><b>Drop PDFs here or click to choose</b><small>You can pick many at once, or add more later</small></div>
+<input id="in-merge" type="file" accept="application/pdf,.pdf" multiple hidden>
+<ul class="list" id="l-merge"></ul>
+<div class="row"><span id="s-merge" class="note" style="border:0;margin:0;padding:0"></span><button id="b-merge" class="pri" disabled>Merge and download</button><button id="b-merge-clear" disabled>Clear list</button></div>
+</section>
+
+<script src="tools-boot.js"></script>
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="js/tools-core.js"></script>
+<script type="module" src="js/pdf-tools.js"></script>
+</body></html>
